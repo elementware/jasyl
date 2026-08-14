@@ -13,10 +13,11 @@ const TREE_STATUSES = {
     needs_check: { label: 'Проверка', color: '#007aff', bgColor: 'rgba(0, 122, 255, 0.12)' }
 };
 
+console.log('🌍 Инициализация карты...');
+
 // ============================================
 //  КАРТА
 // ============================================
-console.log('🌍 Инициализация карты...');
 var map = L.map('map', {
     fullscreenControl: false,
     attributionControl: false,
@@ -29,6 +30,8 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     maxZoom: 19
 }).addTo(map);
 
+console.log('✅ Карта создана');
+
 var markers = {};
 var allTrees = [];
 var selectedTreeId = null;
@@ -37,10 +40,8 @@ var requestPhotoBase64 = null;
 var lastSyncTime = localStorage.getItem('lastSyncTime') || '—';
 var isUploading = false;
 
-console.log('✅ Карта создана');
-
 // ============================================
-//  LIGHTBOX
+//  LIGHTBOX (полноэкранный режим для фото)
 // ============================================
 function openFullscreenImage(src) {
     console.log('🖼️ Открытие полноэкранного фото:', src);
@@ -144,10 +145,7 @@ function createMaterialMarker(status, count) {
 function renderLegend(trees) {
     console.log('🎨 Отрисовка легенды, деревьев:', trees.length);
     var container = document.getElementById('legendContainer');
-    if (!container) {
-        console.warn('⚠️ Контейнер легенды не найден');
-        return;
-    }
+    if (!container) return;
 
     var counts = {};
     trees.forEach(function(t) {
@@ -231,14 +229,12 @@ const STORE_NAME = 'trees';
 var db = null;
 
 function openDB() {
-    console.log('🗄️ Открытие IndexedDB...');
     return new Promise(function(resolve, reject) {
         var request = indexedDB.open(DB_NAME, 1);
         request.onupgradeneeded = function(e) {
             var db = e.target.result;
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                console.log('🗄️ ObjectStore создан');
             }
         };
         request.onsuccess = function(e) { resolve(e.target.result); };
@@ -247,7 +243,6 @@ function openDB() {
 }
 
 async function saveTreeOffline(tree) {
-    console.log('💾 Сохранение дерева офлайн:', tree.id);
     try {
         if (!db) db = await openDB();
         var tx = db.transaction(STORE_NAME, 'readwrite');
@@ -262,7 +257,6 @@ async function saveTreeOffline(tree) {
 }
 
 async function loadTreesOffline() {
-    console.log('📂 Загрузка офлайн-деревьев...');
     try {
         if (!db) db = await openDB();
         return new Promise(function(resolve, reject) {
@@ -279,7 +273,6 @@ async function loadTreesOffline() {
 }
 
 async function deleteTreeOffline(id) {
-    console.log('🗑️ Удаление офлайн-дерева:', id);
     try {
         if (!db) db = await openDB();
         var tx = db.transaction(STORE_NAME, 'readwrite');
@@ -295,7 +288,6 @@ async function deleteTreeOffline(id) {
 
 async function syncOfflineTrees() {
     if (!navigator.onLine) return;
-    console.log('🔄 Синхронизация офлайн-деревьев...');
     var offlineTrees = await loadTreesOffline();
     for (var i = 0; i < offlineTrees.length; i++) {
         var tree = offlineTrees[i];
@@ -337,7 +329,6 @@ async function loadTrees() {
 }
 
 function loadMockData() {
-    console.log('🧪 Загрузка мок-данных');
     allTrees = [
         {
             id: '1',
@@ -521,22 +512,22 @@ function selectTree(id) {
 }
 
 // ============================================
-//  КАМЕРА / ЗАГРУЗКА ФОТО (ИСПРАВЛЕННАЯ С ЛОГАМИ)
+//  ЗАГРУЗКА ФОТО (ОБРАБОТЧИК ФАЙЛА)
 // ============================================
 async function handleFile(file) {
-    console.log('📸 Начало обработки файла:', file ? file.name : 'null');
+    console.log('📸 handleFile вызван, файл:', file ? file.name : 'null');
     if (!file) {
-        console.warn('⚠️ Файл отсутствует');
+        console.warn('📸 Файл не передан');
         return;
     }
 
     if (isUploading) {
-        console.warn('⚠️ Загрузка уже выполняется, пропускаем');
+        console.warn('📸 Загрузка уже выполняется');
         return;
     }
 
     isUploading = true;
-    console.log('📤 Начинаем загрузку...');
+    console.log('📸 Начинаем загрузку файла:', file.name);
 
     var statusBadge = document.getElementById('statusBadge');
     var originalText = statusBadge ? statusBadge.textContent : '';
@@ -551,7 +542,7 @@ async function handleFile(file) {
         formData.append('file', file);
 
         if (navigator.onLine) {
-            console.log('🌐 Отправка на сервер...');
+            console.log('📸 Отправка на сервер:', API_BASE + '/upload');
             var response = await fetch(API_BASE + '/upload', {
                 method: 'POST',
                 body: formData
@@ -562,23 +553,31 @@ async function handleFile(file) {
             }
 
             var data = await response.json();
-            console.log('✅ Ответ сервера:', data);
+            console.log('📸 Ответ сервера:', data);
 
             if (data.photo_url && data.photo_url.startsWith('/uploads/')) {
                 data.photo_url = API_BASE + data.photo_url;
             }
 
             allTrees.push(data);
+
             renderMarkers(allTrees);
             renderLegend(allTrees);
             selectTree(data.id);
+
             alert('✅ Фото загружено!');
+            console.log('📸 Загрузка завершена успешно');
         } else {
-            console.log('📴 Офлайн-режим, сохраняем локально');
+            console.log('📸 Офлайн-режим, сохраняем локально');
             var reader = new FileReader();
+
             var base64 = await new Promise(function(resolve, reject) {
-                reader.onload = function(e) { resolve(e.target.result); };
-                reader.onerror = function() { reject(new Error('Не удалось прочитать файл')); };
+                reader.onload = function(e) {
+                    resolve(e.target.result);
+                };
+                reader.onerror = function() {
+                    reject(new Error('Не удалось прочитать файл'));
+                };
                 reader.readAsDataURL(file);
             });
 
@@ -597,18 +596,23 @@ async function handleFile(file) {
             };
 
             await saveTreeOffline(newTree);
+
             allTrees.push(newTree);
+
             renderMarkers(allTrees);
             renderLegend(allTrees);
             selectTree(newTree.id);
+
             alert('📱 Фото сохранено локально. Синхронизация при подключении к интернету.');
+            console.log('📸 Локальное сохранение завершено');
         }
     } catch (err) {
-        console.error('❌ Ошибка загрузки фото:', err);
+        console.error('📸 Ошибка загрузки фото:', err);
         alert('❌ Ошибка: ' + err.message);
     } finally {
         isUploading = false;
-        console.log('🏁 Загрузка завершена');
+        console.log('📸 Загрузка завершена (finally)');
+
         if (statusBadge) {
             statusBadge.textContent = originalText;
             var tree = allTrees.find(function(t) { return t.id === selectedTreeId; });
@@ -646,55 +650,70 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+
             var tab = this.dataset.tab;
             if (!tab) return;
+
             switchTab(tab);
         });
     });
 
-    // ---- КНОПКИ С data-tab НА ГЛАВНОЙ, В ПАСПОРТЕ ----
+    // ---- КНОПКИ С data-tab НА ГЛАВНОЙ, В ПАСПОРТЕ (кроме камеры) ----
     console.log('🔘 Назначение обработчиков для остальных кнопок с data-tab');
     document.querySelectorAll('.btn-primary[data-tab], .btn-back[data-tab]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+
             var tab = this.dataset.tab;
             if (!tab) return;
+
             switchTab(tab);
         });
     });
 
-    // ---- КАМЕРА / ЗАГРУЗКА ФОТО (ОТДЕЛЬНЫЙ ОБРАБОТЧИК) ----
+    // ---- КАМЕРА / ЗАГРУЗКА ФОТО (ОТДЕЛЬНЫЙ ОБРАБОТЧИК С ДЕТАЛЬНЫМИ ЛОГАМИ) ----
+    console.log('📸 Назначение обработчиков для камеры');
     var cameraInput = document.getElementById('cameraInput');
     var cameraBtn = document.getElementById('cameraBtn');
 
+    console.log('📸 cameraInput:', cameraInput);
+    console.log('📸 cameraBtn:', cameraBtn);
+
     if (cameraBtn && cameraInput) {
-        console.log('📸 Назначение обработчиков для камеры');
+        console.log('✅ cameraBtn и cameraInput найдены');
+
         cameraBtn.addEventListener('click', function(e) {
+            console.log('📸 Нажата кнопка камеры');
             e.preventDefault();
             e.stopPropagation();
-            console.log('📸 Нажата кнопка камеры');
+
             if (isUploading) {
-                console.warn('⚠️ Загрузка уже выполняется');
+                console.warn('📸 Загрузка уже выполняется');
                 return;
             }
+
+            console.log('📸 Вызываем cameraInput.click()');
             cameraInput.click();
         });
 
         cameraInput.addEventListener('change', async function() {
+            console.log('📸 Событие change на cameraInput');
             var file = this.files && this.files[0];
+            console.log('📸 Выбран файл:', file ? file.name : 'нет файла');
+            // Сразу очищаем input, чтобы можно было выбрать тот же файл снова
             this.value = '';
             if (!file) {
-                console.log('ℹ️ Файл не выбран');
+                console.log('📸 Файл не выбран');
                 return;
             }
-            console.log('📂 Выбран файл:', file.name);
+            console.log('📸 Передаём файл в handleFile');
             await handleFile(file);
         });
     } else {
-        console.warn('⚠️ Элементы камеры не найдены. Проверьте id в HTML.');
-        if (!cameraBtn) console.warn('⚠️ #cameraBtn не найден');
-        if (!cameraInput) console.warn('⚠️ #cameraInput не найден');
+        console.warn('❌ cameraBtn или cameraInput не найдены. Проверьте id в HTML.');
+        if (!cameraBtn) console.warn('❌ Не найден элемент с id="cameraBtn"');
+        if (!cameraInput) console.warn('❌ Не найден элемент с id="cameraInput"');
     }
 
     // ---- ОСТАЛЬНЫЕ КНОПКИ ----
@@ -772,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Загружаем данные
+    // ---- ЗАГРУЗКА ДАННЫХ ----
     console.log('📦 Загрузка начальных данных');
     loadTrees();
     loadRequests();
@@ -783,7 +802,6 @@ document.addEventListener('DOMContentLoaded', function() {
 //  ЗАЯВКИ (все функции)
 // ============================================
 function populateTreeSelect() {
-    console.log('📋 Заполнение списка деревьев в заявках');
     var select = document.getElementById('requestTreeSelect');
     if (!select) return;
     select.innerHTML = '<option value="">— Выберите дерево —</option>' +
@@ -1049,7 +1067,7 @@ function updateAnalytics() {
 
 // ---- ОНЛАЙН/ОФФЛАЙН ----
 window.addEventListener('online', function() {
-    console.log('🔄 Восстановлено интернет-соединение');
+    console.log('🌐 Интернет появился');
     updateOnlineStatus(true);
     lastSyncTime = new Date().toLocaleString();
     localStorage.setItem('lastSyncTime', lastSyncTime);
@@ -1065,7 +1083,7 @@ window.addEventListener('online', function() {
 });
 
 window.addEventListener('offline', function() {
-    console.log('📴 Интернет-соединение потеряно');
+    console.log('🌐 Интернет пропал');
     updateOnlineStatus(false);
 });
 
