@@ -73,8 +73,8 @@
                 <div class="grid grid-cols-2 gap-3">
                     <button class="btn-primary text-base" data-tab="map">Карта</button>
                     <button class="btn-primary text-base" data-tab="requests">Заявки</button>
-                    <!-- Кнопка "Фото" на главной (тоже вызывает камеру) -->
-                    <button id="cameraBtn" class="btn-primary text-base col-span-2">Фото</button>
+                    <!-- Кнопка загрузки фото на главной (отдельный id) -->
+                    <button id="uploadBtn" class="btn-primary text-base col-span-2">Загрузить фото</button>
                 </div>
             </div>
         </div>
@@ -252,13 +252,13 @@
             <span>Карта</span>
         </button>
 
-        <!-- КНОПКА КАМЕРЫ БЕЗ data-tab (с id) -->
+        <!-- КНОПКА ЗАГРУЗКИ ФОТО (ИСПРАВЛЕННАЯ) -->
         <button class="bottom-nav-btn" id="cameraBtn">
             <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span>Камера</span>
+            <span>Загрузка фото</span>
         </button>
 
         <button class="bottom-nav-btn" data-tab="requests">

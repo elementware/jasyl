@@ -441,7 +441,7 @@ function selectTree(id) {
 }
 
 // ============================================
-//  КАМЕРА (ГЛАВНАЯ ЛОГИКА)
+//  КАМЕРА / ЗАГРУЗКА ФОТО (ИСПРАВЛЕННАЯ)
 // ============================================
 async function handleFile(file) {
     if (!file) return;
@@ -543,7 +543,7 @@ function switchTab(tab) {
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ---- НИЖНЯЯ НАВИГАЦИЯ ----
+    // ---- НИЖНЯЯ НАВИГАЦИЯ (только кнопки с data-tab) ----
     document.querySelectorAll('#bottomNav .bottom-nav-btn[data-tab]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---- КАМЕРА (ОТДЕЛЬНЫЙ ОБРАБОТЧИК) ----
+    // ---- КАМЕРА / ЗАГРУЗКА ФОТО (ОТДЕЛЬНЫЙ ОБРАБОТЧИК) ----
     var cameraInput = document.getElementById('cameraInput');
     var cameraBtn = document.getElementById('cameraBtn');
 
@@ -579,6 +579,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             cameraInput.click();
         });
+
+        // Также обработчик для кнопки на главной (id="uploadBtn")
+        var uploadBtn = document.getElementById('uploadBtn');
+        if (uploadBtn) {
+            uploadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isUploading) {
+                    console.warn('Загрузка уже выполняется');
+                    return;
+                }
+                cameraInput.click();
+            });
+        }
 
         cameraInput.addEventListener('change', async function() {
             var file = this.files && this.files[0];
@@ -667,10 +681,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // ---- ЗАГРУЗКА ДАННЫХ ----
     loadTrees();
     loadRequests();
+    console.log('🌳 JASYL загружен!');
 });
 
 // ============================================
-//  ЗАЯВКИ (все функции – без изменений)
+//  ЗАЯВКИ (все функции)
 // ============================================
 function populateTreeSelect() {
     var select = document.getElementById('requestTreeSelect');
