@@ -16,6 +16,7 @@ const TREE_STATUSES = {
 // ============================================
 //  КАРТА
 // ============================================
+console.log('🌍 Инициализация карты...');
 var map = L.map('map', {
     fullscreenControl: false,
     attributionControl: false,
@@ -36,10 +37,13 @@ var requestPhotoBase64 = null;
 var lastSyncTime = localStorage.getItem('lastSyncTime') || '—';
 var isUploading = false;
 
+console.log('✅ Карта создана');
+
 // ============================================
 //  LIGHTBOX
 // ============================================
 function openFullscreenImage(src) {
+    console.log('🖼️ Открытие полноэкранного фото:', src);
     var old = document.querySelector('.lightbox-overlay');
     if (old) old.remove();
 
@@ -138,8 +142,12 @@ function createMaterialMarker(status, count) {
 //  ЛЕГЕНДА
 // ============================================
 function renderLegend(trees) {
+    console.log('🎨 Отрисовка легенды, деревьев:', trees.length);
     var container = document.getElementById('legendContainer');
-    if (!container) return;
+    if (!container) {
+        console.warn('⚠️ Контейнер легенды не найден');
+        return;
+    }
 
     var counts = {};
     trees.forEach(function(t) {
@@ -178,6 +186,7 @@ function renderLegend(trees) {
 //  МАРКЕРЫ
 // ============================================
 function renderMarkers(trees) {
+    console.log('📍 Отрисовка маркеров, деревьев:', trees.length);
     Object.values(markers).forEach(function(m) { map.removeLayer(m); });
     markers = {};
 
@@ -222,12 +231,14 @@ const STORE_NAME = 'trees';
 var db = null;
 
 function openDB() {
+    console.log('🗄️ Открытие IndexedDB...');
     return new Promise(function(resolve, reject) {
         var request = indexedDB.open(DB_NAME, 1);
         request.onupgradeneeded = function(e) {
             var db = e.target.result;
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                console.log('🗄️ ObjectStore создан');
             }
         };
         request.onsuccess = function(e) { resolve(e.target.result); };
@@ -236,6 +247,7 @@ function openDB() {
 }
 
 async function saveTreeOffline(tree) {
+    console.log('💾 Сохранение дерева офлайн:', tree.id);
     try {
         if (!db) db = await openDB();
         var tx = db.transaction(STORE_NAME, 'readwrite');
@@ -250,6 +262,7 @@ async function saveTreeOffline(tree) {
 }
 
 async function loadTreesOffline() {
+    console.log('📂 Загрузка офлайн-деревьев...');
     try {
         if (!db) db = await openDB();
         return new Promise(function(resolve, reject) {
@@ -266,6 +279,7 @@ async function loadTreesOffline() {
 }
 
 async function deleteTreeOffline(id) {
+    console.log('🗑️ Удаление офлайн-дерева:', id);
     try {
         if (!db) db = await openDB();
         var tx = db.transaction(STORE_NAME, 'readwrite');
@@ -281,6 +295,7 @@ async function deleteTreeOffline(id) {
 
 async function syncOfflineTrees() {
     if (!navigator.onLine) return;
+    console.log('🔄 Синхронизация офлайн-деревьев...');
     var offlineTrees = await loadTreesOffline();
     for (var i = 0; i < offlineTrees.length; i++) {
         var tree = offlineTrees[i];
@@ -304,10 +319,12 @@ async function syncOfflineTrees() {
 //  ДАННЫЕ
 // ============================================
 async function loadTrees() {
+    console.log('🌳 Загрузка деревьев с сервера...');
     try {
         var res = await fetch(API_BASE + '/api/trees');
         if (!res.ok) throw new Error('Ошибка');
         allTrees = await res.json();
+        console.log('✅ Получено деревьев:', allTrees.length);
         renderMarkers(allTrees);
         renderLegend(allTrees);
         if (allTrees.length > 0) selectTree(allTrees[0].id);
@@ -320,6 +337,7 @@ async function loadTrees() {
 }
 
 function loadMockData() {
+    console.log('🧪 Загрузка мок-данных');
     allTrees = [
         {
             id: '1',
@@ -372,6 +390,7 @@ function loadMockData() {
 //  DASHBOARD
 // ============================================
 function updateDashboard() {
+    console.log('📊 Обновление Dashboard');
     var total = allTrees.length;
     var healthy = allTrees.filter(function(t) { return t.status === 'healthy'; }).length;
     var damaged = allTrees.filter(function(t) {
@@ -424,6 +443,7 @@ function updateOnlineStatus(online) {
 //  ПАСПОРТ
 // ============================================
 function selectTree(id) {
+    console.log('🌳 Выбрано дерево:', id);
     selectedTreeId = id;
     var tree = allTrees.find(function(t) { return t.id === id; });
     if (!tree) return;
@@ -501,19 +521,22 @@ function selectTree(id) {
 }
 
 // ============================================
-//  ЗАГРУЗКА ФОТО (ОБРАБОТЧИК ФАЙЛА)
+//  КАМЕРА / ЗАГРУЗКА ФОТО (ИСПРАВЛЕННАЯ С ЛОГАМИ)
 // ============================================
 async function handleFile(file) {
+    console.log('📸 Начало обработки файла:', file ? file.name : 'null');
     if (!file) {
+        console.warn('⚠️ Файл отсутствует');
         return;
     }
 
     if (isUploading) {
-        console.warn('Загрузка уже выполняется');
+        console.warn('⚠️ Загрузка уже выполняется, пропускаем');
         return;
     }
 
     isUploading = true;
+    console.log('📤 Начинаем загрузку...');
 
     var statusBadge = document.getElementById('statusBadge');
     var originalText = statusBadge ? statusBadge.textContent : '';
@@ -528,6 +551,7 @@ async function handleFile(file) {
         formData.append('file', file);
 
         if (navigator.onLine) {
+            console.log('🌐 Отправка на сервер...');
             var response = await fetch(API_BASE + '/upload', {
                 method: 'POST',
                 body: formData
@@ -538,28 +562,23 @@ async function handleFile(file) {
             }
 
             var data = await response.json();
+            console.log('✅ Ответ сервера:', data);
 
             if (data.photo_url && data.photo_url.startsWith('/uploads/')) {
                 data.photo_url = API_BASE + data.photo_url;
             }
 
             allTrees.push(data);
-
             renderMarkers(allTrees);
             renderLegend(allTrees);
             selectTree(data.id);
-
             alert('✅ Фото загружено!');
         } else {
+            console.log('📴 Офлайн-режим, сохраняем локально');
             var reader = new FileReader();
-
             var base64 = await new Promise(function(resolve, reject) {
-                reader.onload = function(e) {
-                    resolve(e.target.result);
-                };
-                reader.onerror = function() {
-                    reject(new Error('Не удалось прочитать файл'));
-                };
+                reader.onload = function(e) { resolve(e.target.result); };
+                reader.onerror = function() { reject(new Error('Не удалось прочитать файл')); };
                 reader.readAsDataURL(file);
             });
 
@@ -578,21 +597,18 @@ async function handleFile(file) {
             };
 
             await saveTreeOffline(newTree);
-
             allTrees.push(newTree);
-
             renderMarkers(allTrees);
             renderLegend(allTrees);
             selectTree(newTree.id);
-
             alert('📱 Фото сохранено локально. Синхронизация при подключении к интернету.');
         }
     } catch (err) {
-        console.error('Ошибка загрузки фото:', err);
+        console.error('❌ Ошибка загрузки фото:', err);
         alert('❌ Ошибка: ' + err.message);
     } finally {
         isUploading = false;
-
+        console.log('🏁 Загрузка завершена');
         if (statusBadge) {
             statusBadge.textContent = originalText;
             var tree = allTrees.find(function(t) { return t.id === selectedTreeId; });
@@ -605,6 +621,7 @@ async function handleFile(file) {
 //  НАВИГАЦИЯ
 // ============================================
 function switchTab(tab) {
+    console.log('🔄 Переключение на вкладку:', tab);
     document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.add('hidden'); });
     var target = document.getElementById('tab-' + tab);
     if (target) target.classList.remove('hidden');
@@ -621,29 +638,28 @@ function switchTab(tab) {
 //  ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ЗАГРУЗКИ СТРАНИЦЫ
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM загружен, инициализация JASYL...');
 
     // ---- НИЖНЯЯ НАВИГАЦИЯ (ТОЛЬКО КНОПКИ С data-tab) ----
+    console.log('🔘 Назначение обработчиков для нижней навигации');
     document.querySelectorAll('#bottomNav .bottom-nav-btn[data-tab]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-
             var tab = this.dataset.tab;
             if (!tab) return;
-
             switchTab(tab);
         });
     });
 
-    // ---- КНОПКИ С data-tab НА ГЛАВНОЙ, В ПАСПОРТЕ (кроме камеры) ----
+    // ---- КНОПКИ С data-tab НА ГЛАВНОЙ, В ПАСПОРТЕ ----
+    console.log('🔘 Назначение обработчиков для остальных кнопок с data-tab');
     document.querySelectorAll('.btn-primary[data-tab], .btn-back[data-tab]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-
             var tab = this.dataset.tab;
             if (!tab) return;
-
             switchTab(tab);
         });
     });
@@ -653,35 +669,36 @@ document.addEventListener('DOMContentLoaded', function() {
     var cameraBtn = document.getElementById('cameraBtn');
 
     if (cameraBtn && cameraInput) {
+        console.log('📸 Назначение обработчиков для камеры');
         cameraBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-
+            console.log('📸 Нажата кнопка камеры');
             if (isUploading) {
-                console.warn('Загрузка уже выполняется');
+                console.warn('⚠️ Загрузка уже выполняется');
                 return;
             }
-
             cameraInput.click();
         });
 
         cameraInput.addEventListener('change', async function() {
             var file = this.files && this.files[0];
-
-            // Сразу очищаем input, чтобы можно было выбрать тот же файл снова
             this.value = '';
-
             if (!file) {
+                console.log('ℹ️ Файл не выбран');
                 return;
             }
-
+            console.log('📂 Выбран файл:', file.name);
             await handleFile(file);
         });
     } else {
-        console.warn('Элементы камеры не найдены. Проверьте id в HTML.');
+        console.warn('⚠️ Элементы камеры не найдены. Проверьте id в HTML.');
+        if (!cameraBtn) console.warn('⚠️ #cameraBtn не найден');
+        if (!cameraInput) console.warn('⚠️ #cameraInput не найден');
     }
 
     // ---- ОСТАЛЬНЫЕ КНОПКИ ----
+    console.log('🔘 Назначение прочих обработчиков');
     document.getElementById('syncNowBtn')?.addEventListener('click', function() {
         if (navigator.onLine) {
             syncOfflineTrees();
@@ -756,6 +773,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Загружаем данные
+    console.log('📦 Загрузка начальных данных');
     loadTrees();
     loadRequests();
     console.log('🌳 JASYL загружен!');
@@ -765,6 +783,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //  ЗАЯВКИ (все функции)
 // ============================================
 function populateTreeSelect() {
+    console.log('📋 Заполнение списка деревьев в заявках');
     var select = document.getElementById('requestTreeSelect');
     if (!select) return;
     select.innerHTML = '<option value="">— Выберите дерево —</option>' +
@@ -845,6 +864,7 @@ function clearRequestForm() {
 }
 
 function loadRequests() {
+    console.log('📋 Загрузка списка заявок');
     var container = document.getElementById('requestsList');
     if (!container) return;
 
@@ -1029,6 +1049,7 @@ function updateAnalytics() {
 
 // ---- ОНЛАЙН/ОФФЛАЙН ----
 window.addEventListener('online', function() {
+    console.log('🔄 Восстановлено интернет-соединение');
     updateOnlineStatus(true);
     lastSyncTime = new Date().toLocaleString();
     localStorage.setItem('lastSyncTime', lastSyncTime);
@@ -1044,6 +1065,7 @@ window.addEventListener('online', function() {
 });
 
 window.addEventListener('offline', function() {
+    console.log('📴 Интернет-соединение потеряно');
     updateOnlineStatus(false);
 });
 
