@@ -1,6 +1,8 @@
 // ============================================
 //  КОНФИГУРАЦИЯ
 // ============================================
+const API_BASE = 'https://jasyl-3.onrender.com';
+
 const TREE_STATUSES = {
     healthy: { label: 'Здоровое', color: '#34c759', bgColor: 'rgba(52, 199, 89, 0.12)' },
     dead: { label: 'Сухое', color: '#ff9500', bgColor: 'rgba(255, 149, 0, 0.12)' },
@@ -32,20 +34,6 @@ var selectedTreeId = null;
 var currentFilter = null;
 var requestPhotoBase64 = null;
 var lastSyncTime = localStorage.getItem('lastSyncTime') || '—';
-
-const API_BASE = 'https://jasyl-backend.onrender.com';
-
-const API_BASE = 'https://jasyl-backend.onrender.com';
-
-// Переопределяем fetch для всех запросов
-const originalFetch = window.fetch;
-window.fetch = function(url, options) {
-    if (url.startsWith('/')) {
-        url = API_BASE + url;
-    }
-    return originalFetch(url, options);
-};
-
 
 // ============================================
 //  СОЗДАНИЕ MATERIAL МАРКЕРА
@@ -166,7 +154,7 @@ function renderMarkers(trees) {
 // ============================================
 async function loadTrees() {
     try {
-        var res = await fetch('/api/trees');
+        var res = await fetch(API_BASE + '/api/trees');
         if (!res.ok) throw new Error('Ошибка');
         allTrees = await res.json();
         renderMarkers(allTrees);
@@ -248,7 +236,7 @@ function updateDashboard() {
     document.getElementById('dashSyncTime').textContent = document.getElementById('lastSyncTime').textContent || '—';
 
     // Заявки
-    fetch('/api/requests')
+    fetch(API_BASE + '/api/requests')
         .then(function(res) { return res.json(); })
         .then(function(data) {
             var pending = data.filter(function(r) {
@@ -411,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var file = this.files[0];
                 var formData = new FormData();
                 formData.append('file', file);
-                fetch('/upload', { method: 'POST', body: formData })
+                fetch(API_BASE + '/upload', { method: 'POST', body: formData })
                     .then(function(res) { return res.json(); })
                     .then(function(data) {
                         allTrees.push(data);
@@ -595,7 +583,7 @@ function submitRequest() {
     }
 
     if (navigator.onLine) {
-        fetch('/api/requests', {
+        fetch(API_BASE + '/api/requests', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -643,7 +631,7 @@ function loadRequests() {
     if (!container) return;
 
     if (navigator.onLine) {
-        fetch('/api/requests')
+        fetch(API_BASE + '/api/requests')
             .then(function(res) {
                 if (!res.ok) throw new Error('Ошибка');
                 return res.json();
@@ -676,7 +664,7 @@ function syncOfflineRequests(offlineRequests) {
         var sendData = Object.assign({}, req);
         delete sendData.id;
 
-        fetch('/api/requests', {
+        fetch(API_BASE + '/api/requests', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(sendData)
@@ -756,7 +744,7 @@ function updateRequestStatus(id, status) {
         return;
     }
 
-    fetch('/api/requests/' + id, {
+    fetch(API_BASE + '/api/requests/' + id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: status })
