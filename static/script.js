@@ -13,6 +13,9 @@ const TREE_STATUSES = {
     needs_check: { label: 'Проверка', color: '#007aff', bgColor: 'rgba(0, 122, 255, 0.12)' }
 };
 
+// ============================================
+//  КАРТА
+// ============================================
 var map = L.map('map', {
     fullscreenControl: false,
     attributionControl: false,
@@ -34,7 +37,7 @@ var lastSyncTime = localStorage.getItem('lastSyncTime') || '—';
 var isUploading = false;
 
 // ============================================
-//  LIGHTBOX
+//  LIGHTBOX (полноэкранный режим для фото)
 // ============================================
 function openFullscreenImage(src) {
     var old = document.querySelector('.lightbox-overlay');
@@ -206,7 +209,7 @@ function renderMarkers(trees) {
 }
 
 // ============================================
-//  ОФЛАЙН
+//  ОФЛАЙН-ХРАНИЛИЩЕ
 // ============================================
 const DB_NAME = 'JasylOfflineDB';
 const STORE_NAME = 'trees';
@@ -314,6 +317,9 @@ async function loadTrees() {
     }
 }
 
+// ============================================
+//  DASHBOARD
+// ============================================
 function updateDashboard() {
     var total = allTrees.length;
     var healthy = allTrees.filter(function(t) { return t.status === 'healthy'; }).length;
@@ -342,6 +348,9 @@ function updateDashboard() {
         });
 }
 
+// ============================================
+//  СТАТУС-БАР
+// ============================================
 function updateStatusBar() {
     document.getElementById('totalTreesCount').textContent = allTrees.length;
     document.getElementById('lastSyncTime').textContent = lastSyncTime;
@@ -441,7 +450,7 @@ function selectTree(id) {
 }
 
 // ============================================
-//  КАМЕРА / ЗАГРУЗКА ФОТО (ИСПРАВЛЕННАЯ)
+//  ОБРАБОТКА ФАЙЛОВ (КАМЕРА И ГАЛЕРЕЯ)
 // ============================================
 async function handleFile(file) {
     if (!file) return;
@@ -565,10 +574,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---- КАМЕРА / ЗАГРУЗКА ФОТО (ОТДЕЛЬНЫЙ ОБРАБОТЧИК) ----
-    var cameraInput = document.getElementById('cameraInput');
+    // ---- КАМЕРА И ГАЛЕРЕЯ (раздельные обработчики) ----
+    var cameraInput = document.getElementById('cameraInput');   // с capture
+    var galleryInput = document.getElementById('galleryInput'); // без capture
     var cameraBtn = document.getElementById('cameraBtn');
+    var uploadBtn = document.getElementById('uploadBtn');
 
+    // Кнопка "Камера" (нижняя панель)
     if (cameraBtn && cameraInput) {
         cameraBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -579,29 +591,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             cameraInput.click();
         });
+    } else {
+        console.warn('❌ cameraBtn или cameraInput не найдены!');
+    }
 
-        // Также обработчик для кнопки на главной (id="uploadBtn")
-        var uploadBtn = document.getElementById('uploadBtn');
-        if (uploadBtn) {
-            uploadBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (isUploading) {
-                    console.warn('Загрузка уже выполняется');
-                    return;
-                }
-                cameraInput.click();
-            });
-        }
+    // Кнопка "Загрузить фото" (главная)
+    if (uploadBtn && galleryInput) {
+        uploadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (isUploading) {
+                console.warn('Загрузка уже выполняется');
+                return;
+            }
+            galleryInput.click();
+        });
+    } else {
+        console.warn('❌ uploadBtn или galleryInput не найдены!');
+    }
 
+    // Обработчик выбора файла (камера)
+    if (cameraInput) {
         cameraInput.addEventListener('change', async function() {
             var file = this.files && this.files[0];
             this.value = '';
             if (!file) return;
             await handleFile(file);
         });
-    } else {
-        console.warn('❌ cameraBtn или cameraInput не найдены!');
+    }
+
+    // Обработчик выбора файла (галерея)
+    if (galleryInput) {
+        galleryInput.addEventListener('change', async function() {
+            var file = this.files && this.files[0];
+            this.value = '';
+            if (!file) return;
+            await handleFile(file);
+        });
     }
 
     // ---- ОСТАЛЬНЫЕ КНОПКИ ----
@@ -919,6 +945,9 @@ function showRequestPhoto(base64) {
     }
 }
 
+// ============================================
+//  АНАЛИТИКА
+// ============================================
 function updateAnalytics() {
     var total = allTrees.length;
     var healthy = allTrees.filter(function(t) { return t.status === 'healthy'; }).length;
@@ -944,6 +973,7 @@ function updateAnalytics() {
     }
 }
 
+// ---- ОНЛАЙН/ОФФЛАЙН ----
 window.addEventListener('online', function() {
     updateOnlineStatus(true);
     lastSyncTime = new Date().toLocaleString();
@@ -963,4 +993,5 @@ window.addEventListener('offline', function() {
     updateOnlineStatus(false);
 });
 
+// ---- ЗАПУСК ПО УМОЛЧАНИЮ ----
 switchTab('dashboard');
