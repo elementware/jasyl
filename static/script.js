@@ -33,6 +33,20 @@ var currentFilter = null;
 var requestPhotoBase64 = null;
 var lastSyncTime = localStorage.getItem('lastSyncTime') || '—';
 
+const API_BASE = 'https://jasyl-backend.onrender.com';
+
+const API_BASE = 'https://jasyl-backend.onrender.com';
+
+// Переопределяем fetch для всех запросов
+const originalFetch = window.fetch;
+window.fetch = function(url, options) {
+    if (url.startsWith('/')) {
+        url = API_BASE + url;
+    }
+    return originalFetch(url, options);
+};
+
+
 // ============================================
 //  СОЗДАНИЕ MATERIAL МАРКЕРА
 // ============================================
