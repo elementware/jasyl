@@ -36,6 +36,70 @@ var requestPhotoBase64 = null;
 var lastSyncTime = localStorage.getItem('lastSyncTime') || '—';
 
 // ============================================
+//  LIGHTBOX (полноэкранный режим для фото)
+// ============================================
+function openFullscreenImage(src) {
+    var old = document.querySelector('.lightbox-overlay');
+    if (old) old.remove();
+
+    var overlay = document.createElement('div');
+    overlay.className = 'lightbox-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        cursor: pointer;
+        animation: fadeIn 0.2s ease;
+    `;
+
+    var img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = `
+        max-width: 95%;
+        max-height: 95%;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        object-fit: contain;
+    `;
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 32px;
+        font-weight: 300;
+        cursor: pointer;
+        padding: 8px 16px;
+        border-radius: 8px;
+        background: rgba(0,0,0,0.3);
+        transition: background 0.2s;
+        font-family: var(--font, sans-serif);
+    `;
+    closeBtn.onmouseover = function() { this.style.background = 'rgba(255,255,255,0.2)'; };
+    closeBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.3)'; };
+
+    overlay.appendChild(img);
+    overlay.appendChild(closeBtn);
+
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay || e.target === closeBtn) {
+            overlay.remove();
+        }
+    });
+
+    document.body.appendChild(overlay);
+}
+
+// ============================================
 //  СОЗДАНИЕ MATERIAL МАРКЕРА
 // ============================================
 function createMaterialMarker(status, count) {
@@ -147,6 +211,92 @@ function renderMarkers(trees) {
         marker.on('click', function() { selectTree(t.id); });
         markers[t.id] = marker;
     });
+}
+
+// ============================================
+//  ОФЛАЙН-ХРАНИЛИЩЕ
+// ============================================
+const DB_NAME = 'JasylOfflineDB';
+const STORE_NAME = 'trees';
+var db = null;
+
+function openDB() {
+    return new Promise(function(resolve, reject) {
+        var request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = function(e) {
+            var db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            }
+        };
+        request.onsuccess = function(e) { resolve(e.target.result); };
+        request.onerror = function(e) { reject(e.target.error); };
+    });
+}
+
+async function saveTreeOffline(tree) {
+    try {
+        if (!db) db = await openDB();
+        var tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(tree);
+        await new Promise(function(resolve, reject) {
+            tx.oncomplete = resolve;
+            tx.onerror = reject;
+        });
+    } catch (e) {
+        console.warn('Не удалось сохранить офлайн:', e);
+    }
+}
+
+async function loadTreesOffline() {
+    try {
+        if (!db) db = await openDB();
+        return new Promise(function(resolve, reject) {
+            var tx = db.transaction(STORE_NAME, 'readonly');
+            var store = tx.objectStore(STORE_NAME);
+            var request = store.getAll();
+            request.onsuccess = function() { resolve(request.result); };
+            request.onerror = function() { reject(request.error); };
+        });
+    } catch (e) {
+        console.warn('Не удалось загрузить офлайн:', e);
+        return [];
+    }
+}
+
+async function deleteTreeOffline(id) {
+    try {
+        if (!db) db = await openDB();
+        var tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(id);
+        await new Promise(function(resolve, reject) {
+            tx.oncomplete = resolve;
+            tx.onerror = reject;
+        });
+    } catch (e) {
+        console.warn('Не удалось удалить офлайн:', e);
+    }
+}
+
+async function syncOfflineTrees() {
+    if (!navigator.onLine) return;
+    var offlineTrees = await loadTreesOffline();
+    for (var i = 0; i < offlineTrees.length; i++) {
+        var tree = offlineTrees[i];
+        try {
+            var res = await fetch(API_BASE + '/api/trees', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tree)
+            });
+            if (res.ok) {
+                await deleteTreeOffline(tree.id);
+            }
+        } catch (e) {
+            console.warn('Не удалось синхронизировать:', tree.id, e);
+        }
+    }
+    await loadTrees();
 }
 
 // ============================================
@@ -270,7 +420,7 @@ function updateOnlineStatus(online) {
 }
 
 // ============================================
-//  ПАСПОРТ
+//  ПАСПОРТ (с поддержкой полноэкранного фото)
 // ============================================
 function selectTree(id) {
     selectedTreeId = id;
@@ -284,7 +434,19 @@ function selectTree(id) {
     var info = TREE_STATUSES[tree.status] || TREE_STATUSES.needs_check;
 
     var preview = document.getElementById('photoPreview');
-    if (preview) preview.src = tree.photo_url || 'https://picsum.photos/600/400?random=0';
+    if (preview) {
+        var photoUrl = tree.photo_url;
+        if (photoUrl && photoUrl.startsWith('/uploads/')) {
+            photoUrl = API_BASE + photoUrl;
+        }
+        preview.src = photoUrl || 'https://picsum.photos/600/400?random=0';
+        preview.style.cursor = 'pointer';
+        preview.onclick = function() {
+            if (preview.src && preview.src !== 'https://picsum.photos/600/400?random=0') {
+                openFullscreenImage(preview.src);
+            }
+        };
+    }
 
     var title = document.getElementById('speciesTitle');
     if (title) title.textContent = tree.common_name || tree.species || '—';
@@ -338,7 +500,96 @@ function selectTree(id) {
 }
 
 // ============================================
-//  НАВИГАЦИЯ (ГЛАВНАЯ ФУНКЦИЯ)
+//  ЗАГРУЗКА ФОТО
+// ============================================
+async function handleFile(file) {
+    var formData = new FormData();
+    formData.append('file', file);
+
+    var statusBadge = document.getElementById('statusBadge');
+    var originalText = statusBadge ? statusBadge.textContent : '';
+    if (statusBadge) {
+        statusBadge.textContent = '⏳ Анализ...';
+        statusBadge.style.backgroundColor = '#f59e0b';
+    }
+
+    try {
+        var response;
+        if (navigator.onLine) {
+            response = await fetch(API_BASE + '/upload', {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) throw new Error('Ошибка загрузки');
+            var data = await response.json();
+            if (data.photo_url && data.photo_url.startsWith('/uploads/')) {
+                data.photo_url = API_BASE + data.photo_url;
+            }
+            allTrees.push(data);
+            renderMarkers(allTrees);
+            renderLegend(allTrees);
+            selectTree(data.id);
+            alert('✅ Фото загружено!');
+        } else {
+            var reader = new FileReader();
+            var base64 = await new Promise(function(resolve) {
+                reader.onload = function(e) { resolve(e.target.result); };
+                reader.readAsDataURL(file);
+            });
+            var newTree = {
+                id: 'offline-' + Date.now(),
+                species: 'Новое дерево (офлайн)',
+                common_name: 'Неизвестно',
+                status: 'needs_check',
+                confidence: 0.5,
+                lat: map.getCenter().lat,
+                lon: map.getCenter().lng,
+                photo_url: base64,
+                last_inspection: new Date().toISOString(),
+                recommendations: ['Требуется проверка при синхронизации'],
+                history: [{ date: new Date().toISOString(), status: 'needs_check' }]
+            };
+            await saveTreeOffline(newTree);
+            allTrees.push(newTree);
+            renderMarkers(allTrees);
+            renderLegend(allTrees);
+            selectTree(newTree.id);
+            alert('📱 Фото сохранено локально. Синхронизация при подключении к интернету.');
+        }
+    } catch (err) {
+        alert('❌ Ошибка: ' + err.message);
+    } finally {
+        if (statusBadge) {
+            statusBadge.textContent = originalText;
+            var tree = allTrees.find(function(t) { return t.id === selectedTreeId; });
+            statusBadge.style.backgroundColor = tree ? (TREE_STATUSES[tree.status]?.color || '#3b82f6') : '#3b82f6';
+        }
+    }
+}
+
+// ============================================
+//  КАМЕРА
+// ============================================
+var navCamera = document.getElementById('navCamera');
+var cameraInput = document.getElementById('cameraInput');
+
+if (navCamera) {
+    navCamera.addEventListener('click', function() {
+        if (cameraInput) cameraInput.click();
+    });
+}
+
+if (cameraInput) {
+    cameraInput.addEventListener('change', function(e) {
+        if (e.target.files.length) {
+            handleFile(e.target.files[0]);
+            e.target.value = '';
+        }
+    });
+}
+
+// ============================================
+//  НАВИГАЦИЯ
 // ============================================
 function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.add('hidden'); });
@@ -348,7 +599,6 @@ function switchTab(tab) {
         setTimeout(function() { map.invalidateSize(); }, 100);
     }
 
-    // Активная кнопка для нижней навигации
     document.querySelectorAll('.bottom-nav-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.tab === tab);
     });
@@ -425,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ---- ОСТАЛЬНЫЕ КНОПКИ ----
     document.getElementById('syncNowBtn')?.addEventListener('click', function() {
         if (navigator.onLine) {
-            syncOfflineRequests();
+            syncOfflineTrees();
             loadTrees();
             alert('🔄 Синхронизация выполнена!');
         } else {
@@ -778,6 +1028,7 @@ window.addEventListener('online', function() {
     if (Array.isArray(offline) && offline.length > 0) {
         syncOfflineRequests(offline);
     }
+    syncOfflineTrees();
     loadTrees();
     loadRequests();
     updateDashboard();
