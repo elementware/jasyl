@@ -348,7 +348,7 @@ function switchTab(tab) {
         setTimeout(function() { map.invalidateSize(); }, 100);
     }
 
-    // Новая логика активной кнопки (через data-tab)
+    // Активная кнопка для нижней навигации
     document.querySelectorAll('.bottom-nav-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.tab === tab);
     });
@@ -370,17 +370,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
             switchTab(tab);
 
-            // Если это камера — открываем инпут
             if (tab === 'camera') {
                 var cameraInput = document.getElementById('cameraInput');
-                if (cameraInput) {
-                    cameraInput.click();
-                }
+                if (cameraInput) cameraInput.click();
             }
         });
     });
 
-    // ---- КАМЕРА (дополнительно, для обработки файла) ----
+    // ---- ВСЕ КНОПКИ С data-tab (кроме нижней навигации) ----
+    document.querySelectorAll('[data-tab]').forEach(function(btn) {
+        if (btn.classList.contains('bottom-nav-btn')) return;
+
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var tab = this.dataset.tab;
+            if (!tab) return;
+
+            switchTab(tab);
+
+            if (tab === 'camera') {
+                var cameraInput = document.getElementById('cameraInput');
+                if (cameraInput) cameraInput.click();
+            }
+        });
+    });
+
+    // ---- КАМЕРА (обработка выбора файла) ----
     var cameraInput = document.getElementById('cameraInput');
     if (cameraInput) {
         cameraInput.addEventListener('change', function(e) {

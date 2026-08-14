@@ -70,10 +70,11 @@
                     </div>
                 </div>
 
+                <!-- КНОПКИ (без эмодзи, увеличенный шрифт) -->
                 <div class="grid grid-cols-2 gap-3">
-                    <button class="btn-primary" data-tab="map">🗺️ Открыть карту</button>
-                    <button class="btn-primary" data-tab="requests">📋 Перейти к заявкам</button>
-                    <button id="cameraTriggerBtn" class="btn-primary col-span-2">📸 Сделать фото дерева</button>
+                    <button class="btn-primary text-base" data-tab="map">Карта</button>
+                    <button class="btn-primary text-base" data-tab="requests">Заявки</button>
+                    <button id="cameraTriggerBtn" class="btn-primary text-base col-span-2" data-tab="camera">Фото</button>
                 </div>
             </div>
         </div>
@@ -92,11 +93,12 @@
         <!-- ВКЛАДКА: ПАСПОРТ -->
         <div id="tab-passport" class="tab-content w-full h-full absolute inset-0 hidden bg-white overflow-y-auto">
             <div class="p-4 max-w-2xl mx-auto h-full flex flex-col">
-                <button class="btn-back" data-tab="map">
+                <!-- Кнопка "На карту" (без эмодзи, увеличенный шрифт) -->
+                <button class="btn-back text-base" data-tab="map">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Назад к карте
+                    На карту
                 </button>
                 <div id="card" class="flex-1 hidden overflow-y-auto">
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -115,7 +117,8 @@
                             </div>
                             <div><h4 class="text-sm font-semibold text-gray-700">📌 Рекомендации</h4><ul id="recommendations" class="text-base list-disc pl-5 text-gray-700"></ul></div>
                             <div><h4 class="text-sm font-semibold text-gray-700">📋 История</h4><ul id="historyList" class="text-base list-disc pl-5 text-gray-700 max-h-28 overflow-y-auto"></ul></div>
-                            <button class="btn-primary w-full" data-tab="requests">📩 Сформировать заявку</button>
+                            <!-- Кнопка "Заявки" в паспорте (без эмодзи) -->
+                            <button class="btn-primary w-full text-base" data-tab="requests">Заявки</button>
                         </div>
                     </div>
                 </div>
@@ -193,7 +196,7 @@
                                 <img id="requestPhotoImg" src="" alt="Фото" class="h-16 w-16 object-cover rounded-lg border border-gray-200" />
                             </div>
                         </div>
-                        <button id="submitRequestBtn" class="btn-primary w-full">➕ Создать заявку</button>
+                        <button id="submitRequestBtn" class="btn-primary w-full text-base">Создать заявку</button>
                     </div>
                 </div>
 
@@ -213,7 +216,7 @@
                     <h3 class="font-bold text-base text-gray-700 mb-2">🔮 Прогноз</h3>
                     <div id="forecast" class="text-base space-y-1"></div>
                 </div>
-                <button id="reportBtn" class="btn-primary w-full">📄 Сформировать отчёт</button>
+                <button id="reportBtn" class="btn-primary w-full text-base">Сформировать отчёт</button>
                 <div class="bg-gray-50 p-3 rounded-xl mb-3 flex flex-wrap gap-2">
                     <select id="reportStatusFilter" class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-0 bg-white">
                         <option value="all">Все статусы</option>
@@ -234,7 +237,7 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- НИЖНЯЯ НАВИГАЦИЯ (НОВАЯ, ФИКСИРОВАННАЯ)   -->
+    <!-- НИЖНЯЯ НАВИГАЦИЯ (ФИКСИРОВАННАЯ)          -->
     <!-- ========================================== -->
     <nav id="bottomNav" class="bottom-nav">
         <button class="bottom-nav-btn active" data-tab="dashboard">
