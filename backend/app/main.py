@@ -14,7 +14,6 @@ import datetime
 # ============================================
 app = FastAPI(title="JASYL API", version="1.0.0")
 
-# Разрешаем CORS (для разработки)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -46,13 +45,13 @@ class RequestCreate(BaseModel):
     comment: str
 
 # ============================================
-#  ХРАНИЛИЩА (В ПАМЯТИ)
+#  ХРАНИЛИЩА
 # ============================================
 trees_db: Dict[str, Tree] = {}
 requests_db: List[Dict[str, Any]] = []
 
 # ============================================
-#  ИНИЦИАЛИЗАЦИЯ ТЕСТОВЫМИ ДАННЫМИ
+#  ТЕСТОВЫЕ ДАННЫЕ
 # ============================================
 def init_test_data():
     if not trees_db:
@@ -86,39 +85,30 @@ def init_test_data():
 init_test_data()
 
 # ============================================
-#  ЭНДПОИНТЫ API
+#  ЭНДПОИНТЫ
 # ============================================
-
-# ---------- ДЕРЕВЬЯ ----------
 @app.get("/api/trees")
 async def get_trees():
-    """Получить список всех деревьев"""
     return list(trees_db.values())
 
 @app.get("/api/trees/{tree_id}")
 async def get_tree(tree_id: str):
-    """Получить информацию о конкретном дереве"""
     if tree_id not in trees_db:
         raise HTTPException(status_code=404, detail="Дерево не найдено")
     return trees_db[tree_id]
 
-# ---------- ЗАГРУЗКА ФОТО ----------
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
-    """Загрузить фото дерева, выполнить анализ (заглушка) и сохранить дерево"""
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
 
-    # Генерируем уникальное имя файла
     file_ext = os.path.splitext(file.filename)[1]
     filename = f"{uuid.uuid4()}{file_ext}"
     filepath = os.path.join(upload_dir, filename)
 
-    # Сохраняем файл
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Имитация анализа (заглушка)
     new_id = str(len(trees_db) + 1)
     new_tree = Tree(
         id=new_id,
@@ -135,7 +125,6 @@ async def upload_file(file: UploadFile = File(...)):
     )
     trees_db[new_id] = new_tree
 
-    # Возвращаем данные для фронтенда
     return {
         "id": new_id,
         "filename": filename,
@@ -146,10 +135,8 @@ async def upload_file(file: UploadFile = File(...)):
         "lon": new_tree.lon
     }
 
-# ---------- ОБНОВЛЕНИЕ КООРДИНАТ ----------
 @app.post("/update-coords/{tree_id}")
 async def update_coords(tree_id: str, coords: dict):
-    """Обновить координаты дерева"""
     if tree_id not in trees_db:
         raise HTTPException(status_code=404, detail="Дерево не найдено")
     tree = trees_db[tree_id]
@@ -157,20 +144,14 @@ async def update_coords(tree_id: str, coords: dict):
     tree.lon = coords.get("lon")
     return {"status": "ok"}
 
-# ---------- АНАЛИТИКА ----------
 @app.get("/api/analytics")
 async def get_analytics():
-    """Статистика по деревьям и прогноз"""
     total = len(trees_db)
     healthy = sum(1 for t in trees_db.values() if t.status == "healthy")
     damaged = sum(1 for t in trees_db.values() if t.status == "damaged")
     dead = sum(1 for t in trees_db.values() if t.status == "dead")
     leaning = sum(1 for t in trees_db.values() if t.status == "leaning")
-    prediction = {
-        "pruning": 5,
-        "high_risk": 2,
-        "next_pruning_date": "2026-09-01"
-    }
+    prediction = {"pruning": 5, "high_risk": 2, "next_pruning_date": "2026-09-01"}
     return {
         "total": total,
         "healthy": healthy,
@@ -180,10 +161,8 @@ async def get_analytics():
         "prediction": prediction
     }
 
-# ---------- ЗАЯВКИ ----------
 @app.post("/api/requests")
 async def create_request(req: RequestCreate):
-    """Создать новую заявку на работы"""
     req_dict = req.dict()
     req_dict["created_at"] = datetime.datetime.now().isoformat()
     req_dict["tree_name"] = trees_db.get(req.tree_id, {}).common_name or "Unknown"
@@ -192,24 +171,16 @@ async def create_request(req: RequestCreate):
 
 @app.get("/api/requests")
 async def get_requests():
-    """Получить список всех заявок"""
     return requests_db
 
-# ---------- УПРАВЛЕНИЕ МОДЕЛЯМИ ----------
 @app.get("/models")
 async def get_models():
-    """Список доступных моделей"""
     return {"models": ["dummy", "local", "cloud"], "active": "dummy"}
 
 @app.post("/select-model")
 async def select_model(name: str = Form(...)):
-    """Переключить активную модель"""
-    # Здесь можно реализовать логику переключения модели
     return {"status": "ok", "selected": name}
 
-# ============================================
-#  ЗДОРОВЬЕ И КОРЕНЬ
-# ============================================
 @app.get("/")
 async def root():
     return {
@@ -224,13 +195,32 @@ async def health_check():
     return {"status": "healthy", "timestamp": datetime.datetime.utcnow().isoformat()}
 
 # ============================================
-#  МОНТИРУЕМ ПАПКУ UPLOADS (С СОЗДАНИЕМ ПАПКИ)
+#  ОТЛАДОЧНЫЙ ЭНДПОИНТ (проверка папки uploads)
 # ============================================
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+@app.get("/debug-uploads")
+async def debug_uploads():
+    import os
+    cwd = os.getcwd()
+    uploads_exists = os.path.exists("uploads")
+    uploads_files = os.listdir("uploads") if uploads_exists else []
+    return {
+        "cwd": cwd,
+        "uploads_exists": uploads_exists,
+        "uploads_files": uploads_files,
+        "full_path": os.path.join(cwd, "uploads")
+    }
 
 # ============================================
-#  ЗАПУСК (для отладки)
+#  МОНТИРУЕМ ПАПКУ UPLOADS (АБСОЛЮТНЫЙ ПУТЬ)
+# ============================================
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # /app/backend/app
+UPLOADS_DIR = os.path.join(BASE_DIR, "..", "uploads")   # /app/backend/uploads
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+
+# ============================================
+#  ЗАПУСК
 # ============================================
 if __name__ == "__main__":
     import uvicorn
