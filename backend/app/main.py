@@ -108,16 +108,16 @@ async def upload_file(file: UploadFile = File(...)):
     """Загрузить фото дерева, выполнить анализ (заглушка) и сохранить дерево"""
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
-    
+
     # Генерируем уникальное имя файла
     file_ext = os.path.splitext(file.filename)[1]
     filename = f"{uuid.uuid4()}{file_ext}"
     filepath = os.path.join(upload_dir, filename)
-    
+
     # Сохраняем файл
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    
+
     # Имитация анализа (заглушка)
     new_id = str(len(trees_db) + 1)
     new_tree = Tree(
@@ -134,7 +134,7 @@ async def upload_file(file: UploadFile = File(...)):
         history=[{"date": datetime.date.today().isoformat(), "status": "healthy"}]
     )
     trees_db[new_id] = new_tree
-    
+
     # Возвращаем данные для фронтенда
     return {
         "id": new_id,
@@ -223,6 +223,10 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.datetime.utcnow().isoformat()}
 
+# ============================================
+#  МОНТИРУЕМ ПАПКУ UPLOADS (С СОЗДАНИЕМ ПАПКИ)
+# ============================================
+os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # ============================================
