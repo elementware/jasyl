@@ -34,10 +34,10 @@ var selectedTreeId = null;
 var currentFilter = null;
 var requestPhotoBase64 = null;
 var lastSyncTime = localStorage.getItem('lastSyncTime') || '—';
-var isUploading = false; // Флаг для предотвращения повторного открытия диалога
+var isUploading = false;
 
 // ============================================
-//  LIGHTBOX (полноэкранный режим для фото)
+//  LIGHTBOX
 // ============================================
 function openFullscreenImage(src) {
     var old = document.querySelector('.lightbox-overlay');
@@ -421,7 +421,7 @@ function updateOnlineStatus(online) {
 }
 
 // ============================================
-//  ПАСПОРТ (с поддержкой полноэкранного фото)
+//  ПАСПОРТ
 // ============================================
 function selectTree(id) {
     selectedTreeId = id;
@@ -501,45 +501,103 @@ function selectTree(id) {
 }
 
 // ============================================
-//  ЗАГРУЗКА ФОТО (с защитой от повторных кликов)
+//  КАМЕРА / ЗАГРУЗКА ФОТО (ИСПРАВЛЕННАЯ)
 // ============================================
-async function handleFile(file) {
-    // Устанавливаем флаг, чтобы блокировать повторное открытие диалога
-    window.isUploading = true;
+var cameraInput = document.getElementById('cameraInput');
+var cameraBtn = document.getElementById('cameraBtn');
 
-    var formData = new FormData();
-    formData.append('file', file);
+// Открытие системного выбора файла
+if (cameraBtn && cameraInput) {
+    cameraBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isUploading) {
+            console.warn('Загрузка уже выполняется');
+            return;
+        }
+
+        cameraInput.click();
+    });
+}
+
+// Выбор файла
+if (cameraInput) {
+    cameraInput.addEventListener('change', async function() {
+        var file = this.files && this.files[0];
+
+        // Сразу очищаем input
+        this.value = '';
+
+        if (!file) {
+            return;
+        }
+
+        await handleFile(file);
+    });
+}
+
+// Обработка файла
+async function handleFile(file) {
+    if (!file) {
+        return;
+    }
+
+    if (isUploading) {
+        console.warn('Загрузка уже выполняется');
+        return;
+    }
+
+    isUploading = true;
 
     var statusBadge = document.getElementById('statusBadge');
     var originalText = statusBadge ? statusBadge.textContent : '';
-    if (statusBadge) {
-        statusBadge.textContent = '⏳ Анализ...';
-        statusBadge.style.backgroundColor = '#f59e0b';
-    }
 
     try {
-        var response;
+        if (statusBadge) {
+            statusBadge.textContent = '⏳ Анализ...';
+            statusBadge.style.backgroundColor = '#f59e0b';
+        }
+
+        var formData = new FormData();
+        formData.append('file', file);
+
         if (navigator.onLine) {
-            response = await fetch(API_BASE + '/upload', {
+            var response = await fetch(API_BASE + '/upload', {
                 method: 'POST',
                 body: formData
             });
-            if (!response.ok) throw new Error('Ошибка загрузки');
+
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки: HTTP ' + response.status);
+            }
+
             var data = await response.json();
+
             if (data.photo_url && data.photo_url.startsWith('/uploads/')) {
                 data.photo_url = API_BASE + data.photo_url;
             }
+
             allTrees.push(data);
+
             renderMarkers(allTrees);
             renderLegend(allTrees);
             selectTree(data.id);
+
             alert('✅ Фото загружено!');
         } else {
             var reader = new FileReader();
-            var base64 = await new Promise(function(resolve) {
-                reader.onload = function(e) { resolve(e.target.result); };
+
+            var base64 = await new Promise(function(resolve, reject) {
+                reader.onload = function(e) {
+                    resolve(e.target.result);
+                };
+                reader.onerror = function() {
+                    reject(new Error('Не удалось прочитать файл'));
+                };
                 reader.readAsDataURL(file);
             });
+
             var newTree = {
                 id: 'offline-' + Date.now(),
                 species: 'Новое дерево (офлайн)',
@@ -553,18 +611,22 @@ async function handleFile(file) {
                 recommendations: ['Требуется проверка при синхронизации'],
                 history: [{ date: new Date().toISOString(), status: 'needs_check' }]
             };
+
             await saveTreeOffline(newTree);
+
             allTrees.push(newTree);
+
             renderMarkers(allTrees);
             renderLegend(allTrees);
             selectTree(newTree.id);
+
             alert('📱 Фото сохранено локально. Синхронизация при подключении к интернету.');
         }
     } catch (err) {
+        console.error('Ошибка загрузки фото:', err);
         alert('❌ Ошибка: ' + err.message);
     } finally {
-        // Снимаем флаг после завершения
-        window.isUploading = false;
+        isUploading = false;
 
         if (statusBadge) {
             statusBadge.textContent = originalText;
@@ -572,29 +634,6 @@ async function handleFile(file) {
             statusBadge.style.backgroundColor = tree ? (TREE_STATUSES[tree.status]?.color || '#3b82f6') : '#3b82f6';
         }
     }
-}
-
-// ============================================
-//  КАМЕРА
-// ============================================
-var navCamera = document.getElementById('navCamera');
-var cameraInput = document.getElementById('cameraInput');
-
-if (navCamera) {
-    navCamera.addEventListener('click', function() {
-        if (cameraInput && !window.isUploading) {
-            cameraInput.click();
-        }
-    });
-}
-
-if (cameraInput) {
-    cameraInput.addEventListener('change', function(e) {
-        if (e.target.files.length) {
-            handleFile(e.target.files[0]);
-            e.target.value = '';
-        }
-    });
 }
 
 // ============================================
@@ -618,8 +657,8 @@ function switchTab(tab) {
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ---- ВСЕ КНОПКИ НИЖНЕЙ НАВИГАЦИИ ----
-    document.querySelectorAll('.bottom-nav-btn').forEach(function(btn) {
+    // ---- НИЖНЯЯ НАВИГАЦИЯ (ТОЛЬКО КНОПКИ С data-tab) ----
+    document.querySelectorAll('#bottomNav .bottom-nav-btn[data-tab]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -628,20 +667,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!tab) return;
 
             switchTab(tab);
-
-            if (tab === 'camera') {
-                var camInput = document.getElementById('cameraInput');
-                if (camInput && !window.isUploading) {
-                    camInput.click();
-                }
-            }
         });
     });
 
-    // ---- ВСЕ КНОПКИ С data-tab (кроме нижней навигации) ----
-    document.querySelectorAll('[data-tab]').forEach(function(btn) {
-        if (btn.classList.contains('bottom-nav-btn')) return;
-
+    // ---- КНОПКА "КАРТА" НА ГЛАВНОЙ ----
+    document.querySelectorAll('.btn-primary[data-tab]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -650,40 +680,34 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!tab) return;
 
             switchTab(tab);
-
-            if (tab === 'camera') {
-                var camInput = document.getElementById('cameraInput');
-                if (camInput && !window.isUploading) {
-                    camInput.click();
-                }
-            }
         });
     });
 
-    // ---- КАМЕРА (обработка выбора файла) ----
-    var cameraInput = document.getElementById('cameraInput');
-    if (cameraInput) {
-        cameraInput.addEventListener('change', function(e) {
-            if (this.files && this.files.length > 0) {
-                var file = this.files[0];
-                var formData = new FormData();
-                formData.append('file', file);
-                fetch(API_BASE + '/upload', { method: 'POST', body: formData })
-                    .then(function(res) { return res.json(); })
-                    .then(function(data) {
-                        allTrees.push(data);
-                        renderMarkers(allTrees);
-                        renderLegend(allTrees);
-                        selectTree(data.id);
-                        alert('✅ Фото загружено!');
-                    })
-                    .catch(function(err) {
-                        alert('❌ Ошибка загрузки: ' + err.message);
-                    });
-                this.value = '';
-            }
+    // ---- КНОПКА "НА КАРТУ" В ПАСПОРТЕ ----
+    document.querySelectorAll('.btn-back[data-tab]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var tab = this.dataset.tab;
+            if (!tab) return;
+
+            switchTab(tab);
         });
-    }
+    });
+
+    // ---- КНОПКА "ЗАЯВКИ" В ПАСПОРТЕ ----
+    document.querySelectorAll('.btn-primary[data-tab]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var tab = this.dataset.tab;
+            if (!tab) return;
+
+            switchTab(tab);
+        });
+    });
 
     // ---- ОСТАЛЬНЫЕ КНОПКИ ----
     document.getElementById('syncNowBtn')?.addEventListener('click', function() {

@@ -70,11 +70,10 @@
                     </div>
                 </div>
 
-                <!-- КНОПКИ (без эмодзи, увеличенный шрифт) -->
                 <div class="grid grid-cols-2 gap-3">
                     <button class="btn-primary text-base" data-tab="map">Карта</button>
                     <button class="btn-primary text-base" data-tab="requests">Заявки</button>
-                    <button id="cameraTriggerBtn" class="btn-primary text-base col-span-2" data-tab="camera">Фото</button>
+                    <button id="cameraBtn" class="btn-primary text-base col-span-2">Фото</button>
                 </div>
             </div>
         </div>
@@ -93,7 +92,6 @@
         <!-- ВКЛАДКА: ПАСПОРТ -->
         <div id="tab-passport" class="tab-content w-full h-full absolute inset-0 hidden bg-white overflow-y-auto">
             <div class="p-4 max-w-2xl mx-auto h-full flex flex-col">
-                <!-- Кнопка "На карту" (без эмодзи, увеличенный шрифт) -->
                 <button class="btn-back text-base" data-tab="map">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -117,7 +115,6 @@
                             </div>
                             <div><h4 class="text-sm font-semibold text-gray-700">📌 Рекомендации</h4><ul id="recommendations" class="text-base list-disc pl-5 text-gray-700"></ul></div>
                             <div><h4 class="text-sm font-semibold text-gray-700">📋 История</h4><ul id="historyList" class="text-base list-disc pl-5 text-gray-700 max-h-28 overflow-y-auto"></ul></div>
-                            <!-- Кнопка "Заявки" в паспорте (без эмодзи) -->
                             <button class="btn-primary w-full text-base" data-tab="requests">Заявки</button>
                         </div>
                     </div>
@@ -237,7 +234,7 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- НИЖНЯЯ НАВИГАЦИЯ (ФИКСИРОВАННАЯ)          -->
+    <!-- НИЖНЯЯ НАВИГАЦИЯ                          -->
     <!-- ========================================== -->
     <nav id="bottomNav" class="bottom-nav">
         <button class="bottom-nav-btn active" data-tab="dashboard">
@@ -254,7 +251,8 @@
             <span>Карта</span>
         </button>
 
-        <button class="bottom-nav-btn" data-tab="camera" id="navCamera">
+        <!-- КНОПКА КАМЕРЫ БЕЗ data-tab -->
+        <button class="bottom-nav-btn" id="cameraBtn">
             <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -278,7 +276,7 @@
     </nav>
 
     <!-- Скрытые инпуты -->
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
+    <input type="file" id="cameraInput" accept="image/*" style="display:none" />
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
