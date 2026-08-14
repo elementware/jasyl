@@ -5,13 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>🌳 JASYL – Зелёный Костанай</title>
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <!-- Кастомные стили -->
     <link rel="stylesheet" href="style.css" />
 </head>
 <body class="bg-gray-100 h-screen overflow-hidden flex flex-col">
@@ -76,9 +71,9 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <button class="nav-btn bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition shadow-md" data-tab="map">🗺️ Открыть карту</button>
-                    <button class="nav-btn bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-indigo-600 transition shadow-md" data-tab="requests">📋 Перейти к заявкам</button>
-                    <button id="cameraTriggerBtn" class="bg-green-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-600 transition shadow-md col-span-2">📸 Сделать фото дерева</button>
+                    <button class="btn-primary" data-tab="map">🗺️ Открыть карту</button>
+                    <button class="btn-primary" data-tab="requests">📋 Перейти к заявкам</button>
+                    <button id="cameraTriggerBtn" class="btn-primary col-span-2">📸 Сделать фото дерева</button>
                 </div>
             </div>
         </div>
@@ -97,7 +92,7 @@
         <!-- ВКЛАДКА: ПАСПОРТ -->
         <div id="tab-passport" class="tab-content w-full h-full absolute inset-0 hidden bg-white overflow-y-auto">
             <div class="p-4 max-w-2xl mx-auto h-full flex flex-col">
-                <button class="nav-btn flex items-center gap-2 text-blue-500 mb-3 text-base font-medium" data-tab="map">
+                <button class="btn-back" data-tab="map">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
@@ -120,7 +115,7 @@
                             </div>
                             <div><h4 class="text-sm font-semibold text-gray-700">📌 Рекомендации</h4><ul id="recommendations" class="text-base list-disc pl-5 text-gray-700"></ul></div>
                             <div><h4 class="text-sm font-semibold text-gray-700">📋 История</h4><ul id="historyList" class="text-base list-disc pl-5 text-gray-700 max-h-28 overflow-y-auto"></ul></div>
-                            <button class="nav-btn w-full bg-blue-500 text-white py-3.5 rounded-xl font-bold text-base hover:bg-blue-600 transition shadow-md" data-tab="requests">📩 Сформировать заявку</button>
+                            <button class="btn-primary w-full" data-tab="requests">📩 Сформировать заявку</button>
                         </div>
                     </div>
                 </div>
@@ -198,7 +193,7 @@
                                 <img id="requestPhotoImg" src="" alt="Фото" class="h-16 w-16 object-cover rounded-lg border border-gray-200" />
                             </div>
                         </div>
-                        <button id="submitRequestBtn" class="w-full bg-blue-500 text-white py-3.5 rounded-xl font-bold text-base hover:bg-blue-600 transition shadow-md">➕ Создать заявку</button>
+                        <button id="submitRequestBtn" class="btn-primary w-full">➕ Создать заявку</button>
                     </div>
                 </div>
 
@@ -218,7 +213,7 @@
                     <h3 class="font-bold text-base text-gray-700 mb-2">🔮 Прогноз</h3>
                     <div id="forecast" class="text-base space-y-1"></div>
                 </div>
-                <button id="reportBtn" class="w-full bg-indigo-500 text-white py-3 rounded-xl font-bold text-base hover:bg-indigo-600 transition shadow-md mb-3">📄 Сформировать отчёт</button>
+                <button id="reportBtn" class="btn-primary w-full">📄 Сформировать отчёт</button>
                 <div class="bg-gray-50 p-3 rounded-xl mb-3 flex flex-wrap gap-2">
                     <select id="reportStatusFilter" class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-0 bg-white">
                         <option value="all">Все статусы</option>
@@ -239,50 +234,49 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- НИЖНЯЯ НАВИГАЦИЯ (УВЕЛИЧЕННЫЕ ИКОНКИ)      -->
+    <!-- НИЖНЯЯ НАВИГАЦИЯ (НОВАЯ, ФИКСИРОВАННАЯ)   -->
     <!-- ========================================== -->
-    <nav id="bottomNav" class="bg-white border-t border-gray-200 flex justify-around items-center py-3 px-2 safe-area-bottom shrink-0">
-        <button class="nav-btn flex flex-col items-center gap-1 text-gray-700 active" data-tab="dashboard">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+    <nav id="bottomNav" class="bottom-nav">
+        <button class="bottom-nav-btn active" data-tab="dashboard">
+            <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
             </svg>
-            <span class="text-[10px] font-medium">Главная</span>
+            <span>Главная</span>
         </button>
 
-        <button class="nav-btn flex flex-col items-center gap-1 text-gray-700" data-tab="map">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+        <button class="bottom-nav-btn" data-tab="map">
+            <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
-            <span class="text-[10px] font-medium">Карта</span>
+            <span>Карта</span>
         </button>
 
-        <button class="nav-btn flex flex-col items-center gap-1 text-gray-700" data-tab="camera" id="navCamera">
-            <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+        <button class="bottom-nav-btn" data-tab="camera" id="navCamera">
+            <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span class="text-[10px] font-medium">Камера</span>
+            <span>Камера</span>
         </button>
 
-        <button class="nav-btn flex flex-col items-center gap-1 text-gray-700" data-tab="requests">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+        <button class="bottom-nav-btn" data-tab="requests">
+            <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <span class="text-[10px] font-medium">Заявки</span>
+            <span>Заявки</span>
         </button>
 
-        <button class="nav-btn flex flex-col items-center gap-1 text-gray-700" data-tab="analytics">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+        <button class="bottom-nav-btn" data-tab="analytics">
+            <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
             </svg>
-            <span class="text-[10px] font-medium">Аналитика</span>
+            <span>Аналитика</span>
         </button>
     </nav>
 
     <!-- Скрытые инпуты -->
     <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
 
-    <!-- Скрипты -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js" defer></script>

@@ -1,5 +1,5 @@
 /* ============================================
-   🌿 JASYL — Apple + Material Design Style
+   🌿 JASYL — Финальные стили (с фикс-навигацией)
    ============================================ */
 
 :root {
@@ -49,6 +49,7 @@ html, body {
     flex-shrink: 0;
     min-height: 44px;
     z-index: 20;
+    position: relative;
 }
 
 #statusBar .status-dot {
@@ -75,72 +76,139 @@ html, body {
 }
 #statusBar .sync-btn:hover { background: rgba(0, 122, 255, 0.08); }
 
-/* ---------- НАВИГАЦИЯ ---------- */
-#bottomNav {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-top: 0.5px solid var(--border-color);
-    padding: 6px 8px 8px;
-    flex-shrink: 0;
-    z-index: 30;
-}
-
-.nav-btn {
-    background: none;
+/* ---------- ОСНОВНЫЕ КНОПКИ ---------- */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font);
     border: none;
     cursor: pointer;
-    padding: 4px 8px;
-    border-radius: var(--radius-sm);
     transition: var(--transition);
-    color: var(--text-secondary);
+    background: #007aff;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+    text-decoration: none;
+}
+.btn-primary:hover {
+    background: #0066d9;
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    transform: translateY(-1px);
+}
+.btn-primary:active {
+    transform: scale(0.96);
+}
+.btn-primary.w-full { width: 100%; }
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: #007aff;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: var(--transition);
+}
+.btn-back:hover { opacity: 0.7; }
+
+/* ---------- НИЖНЯЯ НАВИГАЦИЯ (фиксированная) ---------- */
+#bottomNav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+
+    width: 100%;
+    min-height: 64px;
+
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+
+    border-top: 0.5px solid var(--border-color);
+
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+
+    z-index: 9999 !important;
+
+    touch-action: manipulation;
+    pointer-events: auto;
+}
+
+/* ---------- КНОПКИ НИЖНЕЙ НАВИГАЦИИ ---------- */
+.bottom-nav-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 52px;
+
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1px;
+    justify-content: center;
+
+    padding: 4px 2px;
+
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-md);
+
+    color: var(--text-secondary);
+
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
-    min-width: 52px;
-    position: relative;
+
+    transition: var(--transition);
 }
 
-.nav-btn.active { color: #007aff; }
+.bottom-nav-btn svg {
+    width: 28px !important;
+    height: 28px !important;
 
-.nav-btn svg {
-    width: 28px;
-    height: 28px;
+    flex-shrink: 0;
+
     stroke: currentColor;
     fill: none;
     stroke-width: 1.5;
     stroke-linecap: round;
     stroke-linejoin: round;
+
     transition: var(--transition);
 }
-.nav-btn:active { transform: scale(0.92); }
 
-.nav-btn .badge {
-    position: absolute;
-    top: 0px;
-    right: 4px;
-    background: #ff3b30;
-    color: white;
-    font-size: 9px;
-    font-weight: 600;
-    min-width: 16px;
-    height: 16px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 4px;
+.bottom-nav-btn span {
+    margin-top: 2px;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.2;
 }
 
-/* ---------- ВКЛАДКИ ---------- */
-.tab-content { animation: fadeIn 0.3s ease; }
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+.bottom-nav-btn.active {
+    color: #007aff;
+}
+
+.bottom-nav-btn:active {
+    transform: scale(0.92);
 }
 
 /* ---------- КАРТА ---------- */
@@ -181,7 +249,7 @@ html, body {
 }
 .leaflet-popup-tip { background: var(--bg-secondary) !important; }
 
-/* ---------- ЛЕГЕНДА (крупная, сверху) ---------- */
+/* ---------- ЛЕГЕНДА ---------- */
 #legendContainer {
     display: flex;
     flex-wrap: wrap;
@@ -284,48 +352,13 @@ html, body {
     letter-spacing: 0.3px;
 }
 
-/* ---------- APPLE КАРТОЧКИ ---------- */
-.apple-card {
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    border: 0.5px solid var(--border-color);
-    transition: var(--transition);
-}
-.apple-card:hover { box-shadow: var(--shadow-lg); }
-
-/* ---------- КНОПКИ ---------- */
-.apple-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border-radius: var(--radius-md);
-    font-size: 15px;
-    font-weight: 500;
-    font-family: var(--font);
-    border: none;
-    cursor: pointer;
-    transition: var(--transition);
-    background: #007aff;
-    color: white;
-    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
-}
-.apple-btn:hover {
-    background: #0066d9;
-    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
-    transform: translateY(-1px);
-}
-.apple-btn:active { transform: scale(0.96); }
-
 /* ---------- ФОРМЫ ---------- */
 input, select, textarea {
     font-family: var(--font);
     font-size: 15px;
     padding: 10px 14px;
     border: 0.5px solid var(--border-color);
-    border-radius: var(--radius-sm);
+    border-radius: 8px;
     background: var(--bg-primary);
     color: var(--text-primary);
     transition: var(--transition);
@@ -360,7 +393,7 @@ label {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
 /* ---------- ЗАЯВКИ ---------- */
 .request-item {
@@ -401,7 +434,7 @@ label {
     text-transform: uppercase;
 }
 
-/* ---------- АДАПТИВ ---------- */
+/* ---------- АДАПТИВ (мобильные) ---------- */
 @media (max-width: 640px) {
     #statusBar {
         font-size: 12px;
@@ -410,8 +443,9 @@ label {
     }
     #statusBar .status-dot { width: 8px; height: 8px; }
 
-    .nav-btn { min-width: 40px; padding: 2px 4px; font-size: 9px; }
-    .nav-btn svg { width: 22px; height: 22px; }
+    .bottom-nav-btn { min-height: 48px; font-size: 9px; }
+    .bottom-nav-btn svg { width: 24px !important; height: 24px !important; }
+    .bottom-nav-btn span { font-size: 9px; }
 
     #legendContainer { gap: 4px; padding: 6px 10px; border-radius: var(--radius-md); margin: 0 6px; }
     .legend-btn { font-size: 10px; padding: 4px 10px; gap: 4px; }
@@ -427,6 +461,7 @@ label {
 @media (max-width: 380px) {
     .legend-btn { font-size: 8px; padding: 3px 6px; }
     .legend-btn .dot { width: 6px; height: 6px; }
+    .bottom-nav-btn svg { width: 20px !important; height: 20px !important; }
 }
 
 /* ---------- FULLSCREEN ---------- */

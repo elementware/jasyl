@@ -348,11 +348,10 @@ function switchTab(tab) {
         setTimeout(function() { map.invalidateSize(); }, 100);
     }
 
-    document.querySelectorAll('.nav-btn').forEach(function(btn) {
-        btn.classList.remove('active');
+    // Новая логика активной кнопки (через data-tab)
+    document.querySelectorAll('.bottom-nav-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
     });
-    var activeBtn = document.getElementById('nav' + tab.charAt(0).toUpperCase() + tab.slice(1));
-    if (activeBtn) activeBtn.classList.add('active');
 }
 
 // ============================================
@@ -360,21 +359,28 @@ function switchTab(tab) {
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ---- ВСЕ КНОПКИ НАВИГАЦИИ ----
-    document.querySelectorAll('.nav-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
+    // ---- ВСЕ КНОПКИ НИЖНЕЙ НАВИГАЦИИ ----
+    document.querySelectorAll('.bottom-nav-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
             var tab = this.dataset.tab;
-            if (tab) {
-                switchTab(tab);
-                // Если это камера — открываем инпут
-                if (tab === 'camera') {
-                    document.getElementById('cameraInput').click();
+            if (!tab) return;
+
+            switchTab(tab);
+
+            // Если это камера — открываем инпут
+            if (tab === 'camera') {
+                var cameraInput = document.getElementById('cameraInput');
+                if (cameraInput) {
+                    cameraInput.click();
                 }
             }
         });
     });
 
-    // ---- КАМЕРА (отдельно) ----
+    // ---- КАМЕРА (дополнительно, для обработки файла) ----
     var cameraInput = document.getElementById('cameraInput');
     if (cameraInput) {
         cameraInput.addEventListener('change', function(e) {
@@ -596,7 +602,7 @@ function syncOfflineRequests(offlineRequests) {
     if (!offlineRequests || !Array.isArray(offlineRequests) || offlineRequests.length === 0) {
         return;
     }
-    
+
     if (!navigator.onLine) {
         return;
     }
