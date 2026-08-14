@@ -441,7 +441,7 @@ function selectTree(id) {
 }
 
 // ============================================
-//  КАМЕРА (ГЛАВНОЕ – ВОТ ОНА!)
+//  КАМЕРА (ГЛАВНАЯ ЛОГИКА)
 // ============================================
 async function handleFile(file) {
     if (!file) return;
@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---- КАМЕРА (ВОТ ЗДЕСЬ ОСНОВНАЯ ЛОГИКА) ----
+    // ---- КАМЕРА (ОТДЕЛЬНЫЙ ОБРАБОТЧИК) ----
     var cameraInput = document.getElementById('cameraInput');
     var cameraBtn = document.getElementById('cameraBtn');
 
