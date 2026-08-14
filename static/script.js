@@ -672,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---- КАМЕРА / ЗАГРУЗКА ФОТО (ОТДЕЛЬНЫЙ ОБРАБОТЧИК С ДЕТАЛЬНЫМИ ЛОГАМИ) ----
+    // ---- КАМЕРА / ЗАГРУЗКА ФОТО (ОТДЕЛЬНЫЙ ОБРАБОТЧИК С ПРОВЕРКОЙ) ----
     console.log('📸 Назначение обработчиков для камеры');
     var cameraInput = document.getElementById('cameraInput');
     var cameraBtn = document.getElementById('cameraBtn');
@@ -680,11 +680,21 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('📸 cameraInput:', cameraInput);
     console.log('📸 cameraBtn:', cameraBtn);
 
+    // Принудительно выведем в консоль
+    if (!cameraInput) console.warn('❌ cameraInput не найден!');
+    if (!cameraBtn) console.warn('❌ cameraBtn не найден!');
+
     if (cameraBtn && cameraInput) {
         console.log('✅ cameraBtn и cameraInput найдены');
 
+        // Удаляем все старые обработчики, если они есть (через clone)
+        var newCameraBtn = cameraBtn.cloneNode(true);
+        cameraBtn.parentNode.replaceChild(newCameraBtn, cameraBtn);
+        // Обновляем ссылку
+        cameraBtn = newCameraBtn;
+
         cameraBtn.addEventListener('click', function(e) {
-            console.log('📸 Нажата кнопка камеры');
+            console.log('📸 Нажата кнопка камеры (нижняя навигация)');
             e.preventDefault();
             e.stopPropagation();
 
@@ -697,11 +707,12 @@ document.addEventListener('DOMContentLoaded', function() {
             cameraInput.click();
         });
 
+        // Обработчик изменения файла
         cameraInput.addEventListener('change', async function() {
             console.log('📸 Событие change на cameraInput');
             var file = this.files && this.files[0];
             console.log('📸 Выбран файл:', file ? file.name : 'нет файла');
-            // Сразу очищаем input, чтобы можно было выбрать тот же файл снова
+            // Сразу очищаем input
             this.value = '';
             if (!file) {
                 console.log('📸 Файл не выбран');
@@ -710,10 +721,29 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('📸 Передаём файл в handleFile');
             await handleFile(file);
         });
+
+        // Также добавим обработчик на кнопку "Фото" на главной (она тоже имеет id="cameraBtn")
+        // Но она уже использует тот же id, поэтому обработчик будет общий.
+        // Дополнительно можно добавить обработчик на все элементы с id="cameraBtn" (их может быть несколько)
+        document.querySelectorAll('#cameraBtn').forEach(function(btn) {
+            // Но мы уже обработали одну, поэтому остальные просто продублируем
+            if (btn !== cameraBtn) {
+                btn.addEventListener('click', function(e) {
+                    console.log('📸 Нажата кнопка камеры (главная)');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (isUploading) {
+                        console.warn('📸 Загрузка уже выполняется');
+                        return;
+                    }
+                    console.log('📸 Вызываем cameraInput.click() (главная)');
+                    cameraInput.click();
+                });
+            }
+        });
+
     } else {
-        console.warn('❌ cameraBtn или cameraInput не найдены. Проверьте id в HTML.');
-        if (!cameraBtn) console.warn('❌ Не найден элемент с id="cameraBtn"');
-        if (!cameraInput) console.warn('❌ Не найден элемент с id="cameraInput"');
+        console.error('❌ cameraBtn или cameraInput не найдены!');
     }
 
     // ---- ОСТАЛЬНЫЕ КНОПКИ ----
