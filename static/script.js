@@ -501,43 +501,8 @@ function selectTree(id) {
 }
 
 // ============================================
-//  КАМЕРА / ЗАГРУЗКА ФОТО (ИСПРАВЛЕННАЯ)
+//  ЗАГРУЗКА ФОТО (ОБРАБОТЧИК ФАЙЛА)
 // ============================================
-var cameraInput = document.getElementById('cameraInput');
-var cameraBtn = document.getElementById('cameraBtn');
-
-// Открытие системного выбора файла
-if (cameraBtn && cameraInput) {
-    cameraBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (isUploading) {
-            console.warn('Загрузка уже выполняется');
-            return;
-        }
-
-        cameraInput.click();
-    });
-}
-
-// Выбор файла
-if (cameraInput) {
-    cameraInput.addEventListener('change', async function() {
-        var file = this.files && this.files[0];
-
-        // Сразу очищаем input
-        this.value = '';
-
-        if (!file) {
-            return;
-        }
-
-        await handleFile(file);
-    });
-}
-
-// Обработка файла
 async function handleFile(file) {
     if (!file) {
         return;
@@ -670,8 +635,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---- КНОПКА "КАРТА" НА ГЛАВНОЙ ----
-    document.querySelectorAll('.btn-primary[data-tab]').forEach(function(btn) {
+    // ---- КНОПКИ С data-tab НА ГЛАВНОЙ, В ПАСПОРТЕ (кроме камеры) ----
+    document.querySelectorAll('.btn-primary[data-tab], .btn-back[data-tab]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -683,31 +648,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---- КНОПКА "НА КАРТУ" В ПАСПОРТЕ ----
-    document.querySelectorAll('.btn-back[data-tab]').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
+    // ---- КАМЕРА / ЗАГРУЗКА ФОТО (ОТДЕЛЬНЫЙ ОБРАБОТЧИК) ----
+    var cameraInput = document.getElementById('cameraInput');
+    var cameraBtn = document.getElementById('cameraBtn');
+
+    if (cameraBtn && cameraInput) {
+        cameraBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
 
-            var tab = this.dataset.tab;
-            if (!tab) return;
+            if (isUploading) {
+                console.warn('Загрузка уже выполняется');
+                return;
+            }
 
-            switchTab(tab);
+            cameraInput.click();
         });
-    });
 
-    // ---- КНОПКА "ЗАЯВКИ" В ПАСПОРТЕ ----
-    document.querySelectorAll('.btn-primary[data-tab]').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
+        cameraInput.addEventListener('change', async function() {
+            var file = this.files && this.files[0];
 
-            var tab = this.dataset.tab;
-            if (!tab) return;
+            // Сразу очищаем input, чтобы можно было выбрать тот же файл снова
+            this.value = '';
 
-            switchTab(tab);
+            if (!file) {
+                return;
+            }
+
+            await handleFile(file);
         });
-    });
+    } else {
+        console.warn('Элементы камеры не найдены. Проверьте id в HTML.');
+    }
 
     // ---- ОСТАЛЬНЫЕ КНОПКИ ----
     document.getElementById('syncNowBtn')?.addEventListener('click', function() {
