@@ -13,9 +13,6 @@ const TREE_STATUSES = {
     needs_check: { label: 'Проверка', color: '#007aff', bgColor: 'rgba(0, 122, 255, 0.12)' }
 };
 
-// ============================================
-//  КАРТА
-// ============================================
 var map = L.map('map', {
     fullscreenControl: false,
     attributionControl: false,
@@ -101,7 +98,7 @@ function openFullscreenImage(src) {
 }
 
 // ============================================
-//  МАРКЕРЫ
+//  МАРКЕРЫ И ЛЕГЕНДА
 // ============================================
 function createMaterialMarker(status, count) {
     var info = TREE_STATUSES[status] || TREE_STATUSES.needs_check;
@@ -209,7 +206,7 @@ function renderMarkers(trees) {
 }
 
 // ============================================
-//  ОФЛАЙН-ХРАНИЛИЩЕ
+//  ОФЛАЙН
 // ============================================
 const DB_NAME = 'JasylOfflineDB';
 const STORE_NAME = 'trees';
@@ -295,15 +292,13 @@ async function syncOfflineTrees() {
 }
 
 // ============================================
-//  ДАННЫЕ (БЕЗ МОК-ДАННЫХ)
+//  ЗАГРУЗКА ДАННЫХ (БЕЗ МОКОВ)
 // ============================================
 async function loadTrees() {
-    console.log('🌳 Загрузка деревьев с сервера...');
     try {
         var res = await fetch(API_BASE + '/api/trees');
         if (!res.ok) throw new Error('Ошибка');
         allTrees = await res.json();
-        console.log('✅ Получено деревьев:', allTrees.length);
         renderMarkers(allTrees);
         renderLegend(allTrees);
         if (allTrees.length > 0) selectTree(allTrees[0].id);
@@ -319,11 +314,7 @@ async function loadTrees() {
     }
 }
 
-// ============================================
-//  DASHBOARD
-// ============================================
 function updateDashboard() {
-    console.log('📊 Обновление Dashboard');
     var total = allTrees.length;
     var healthy = allTrees.filter(function(t) { return t.status === 'healthy'; }).length;
     var damaged = allTrees.filter(function(t) {
@@ -351,9 +342,6 @@ function updateDashboard() {
         });
 }
 
-// ============================================
-//  СТАТУС-БАР
-// ============================================
 function updateStatusBar() {
     document.getElementById('totalTreesCount').textContent = allTrees.length;
     document.getElementById('lastSyncTime').textContent = lastSyncTime;
@@ -376,7 +364,6 @@ function updateOnlineStatus(online) {
 //  ПАСПОРТ
 // ============================================
 function selectTree(id) {
-    console.log('🌳 Выбрано дерево:', id);
     selectedTreeId = id;
     var tree = allTrees.find(function(t) { return t.id === id; });
     if (!tree) return;
@@ -454,7 +441,7 @@ function selectTree(id) {
 }
 
 // ============================================
-//  ЗАГРУЗКА ФОТО
+//  КАМЕРА (ГЛАВНОЕ – ВОТ ОНА!)
 // ============================================
 async function handleFile(file) {
     if (!file) return;
@@ -539,7 +526,6 @@ async function handleFile(file) {
 //  НАВИГАЦИЯ
 // ============================================
 function switchTab(tab) {
-    console.log('🔄 Переключение на вкладку:', tab);
     document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.add('hidden'); });
     var target = document.getElementById('tab-' + tab);
     if (target) target.classList.remove('hidden');
@@ -556,7 +542,6 @@ function switchTab(tab) {
 //  ИНИЦИАЛИЗАЦИЯ
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 DOM загружен');
 
     // ---- НИЖНЯЯ НАВИГАЦИЯ ----
     document.querySelectorAll('#bottomNav .bottom-nav-btn[data-tab]').forEach(function(btn) {
@@ -580,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---- КАМЕРА ----
+    // ---- КАМЕРА (ВОТ ЗДЕСЬ ОСНОВНАЯ ЛОГИКА) ----
     var cameraInput = document.getElementById('cameraInput');
     var cameraBtn = document.getElementById('cameraBtn');
 
@@ -601,9 +586,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!file) return;
             await handleFile(file);
         });
+    } else {
+        console.warn('❌ cameraBtn или cameraInput не найдены!');
     }
 
-    // ---- ПРОЧИЕ КНОПКИ ----
+    // ---- ОСТАЛЬНЫЕ КНОПКИ ----
     document.getElementById('syncNowBtn')?.addEventListener('click', function() {
         if (navigator.onLine) {
             syncOfflineTrees();
@@ -680,11 +667,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // ---- ЗАГРУЗКА ДАННЫХ ----
     loadTrees();
     loadRequests();
-    console.log('🌳 JASYL загружен!');
 });
 
 // ============================================
-//  ЗАЯВКИ
+//  ЗАЯВКИ (все функции – без изменений)
 // ============================================
 function populateTreeSelect() {
     var select = document.getElementById('requestTreeSelect');
@@ -767,7 +753,6 @@ function clearRequestForm() {
 }
 
 function loadRequests() {
-    console.log('📋 Загрузка списка заявок');
     var container = document.getElementById('requestsList');
     if (!container) return;
 
