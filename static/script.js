@@ -178,7 +178,7 @@ function loadMockData() {
             confidence: 0.95,
             lat: 53.1706,
             lon: 63.5845,
-            photo_url: 'https://via.placeholder.com/600x400/e8f5e9/2e7d32?text=Дуб',
+            photo_url: 'https://picsum.photos/400/300?random=1',
             last_inspection: new Date().toISOString(),
             recommendations: ['Регулярный полив'],
             history: [{ date: new Date().toISOString(), status: 'healthy' }]
@@ -191,7 +191,7 @@ function loadMockData() {
             confidence: 0.82,
             lat: 53.1750,
             lon: 63.5900,
-            photo_url: 'https://via.placeholder.com/600x400/fff3e0/e65100?text=Сосна',
+            photo_url: 'https://picsum.photos/400/300?random=2',
             last_inspection: new Date().toISOString(),
             recommendations: ['Удаление', 'Замена'],
             history: [{ date: new Date().toISOString(), status: 'dead' }]
@@ -204,7 +204,7 @@ function loadMockData() {
             confidence: 0.88,
             lat: 53.1650,
             lon: 63.5950,
-            photo_url: 'https://via.placeholder.com/600x400/fce4ec/c62828?text=Берёза',
+            photo_url: 'https://picsum.photos/400/300?random=3',
             last_inspection: new Date().toISOString(),
             recommendations: ['Обрезка аварийных ветвей'],
             history: [{ date: new Date().toISOString(), status: 'branch_damaged' }]
@@ -218,7 +218,7 @@ function loadMockData() {
 }
 
 // ============================================
-//  DASHBOARD (ГЛАВНОЕ ОКНО)
+//  DASHBOARD
 // ============================================
 function updateDashboard() {
     var total = allTrees.length;
@@ -235,7 +235,6 @@ function updateDashboard() {
     document.getElementById('dashStatus').textContent = navigator.onLine ? '🟢 Онлайн' : '🔴 Офлайн';
     document.getElementById('dashSyncTime').textContent = document.getElementById('lastSyncTime').textContent || '—';
 
-    // Заявки
     fetch(API_BASE + '/api/requests')
         .then(function(res) { return res.json(); })
         .then(function(data) {
@@ -285,7 +284,7 @@ function selectTree(id) {
     var info = TREE_STATUSES[tree.status] || TREE_STATUSES.needs_check;
 
     var preview = document.getElementById('photoPreview');
-    if (preview) preview.src = tree.photo_url || 'https://via.placeholder.com/600x400/e0e7ff/6b7280?text=Нет+фото';
+    if (preview) preview.src = tree.photo_url || 'https://picsum.photos/600/400?random=0';
 
     var title = document.getElementById('speciesTitle');
     if (title) title.textContent = tree.common_name || tree.species || '—';
@@ -339,7 +338,7 @@ function selectTree(id) {
 }
 
 // ============================================
-//  НАВИГАЦИЯ
+//  НАВИГАЦИЯ (ГЛАВНАЯ ФУНКЦИЯ)
 // ============================================
 function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.add('hidden'); });
@@ -349,7 +348,6 @@ function switchTab(tab) {
         setTimeout(function() { map.invalidateSize(); }, 100);
     }
 
-    // Обновляем активную кнопку
     document.querySelectorAll('.nav-btn').forEach(function(btn) {
         btn.classList.remove('active');
     });
@@ -358,42 +356,27 @@ function switchTab(tab) {
 }
 
 // ============================================
-//  НАЗНАЧЕНИЕ ОБРАБОТЧИКОВ
+//  ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ЗАГРУЗКИ СТРАНИЦЫ
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ---- DASHBOARD ----
-    var dashBtn = document.getElementById('navDashboard');
-    if (dashBtn) {
-        dashBtn.addEventListener('click', function() {
-            switchTab('dashboard');
-            updateDashboard();
+    // ---- ВСЕ КНОПКИ НАВИГАЦИИ ----
+    document.querySelectorAll('.nav-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var tab = this.dataset.tab;
+            if (tab) {
+                switchTab(tab);
+                // Если это камера — открываем инпут
+                if (tab === 'camera') {
+                    document.getElementById('cameraInput').click();
+                }
+            }
         });
-    }
+    });
 
-    // ---- КАРТА ----
-    var navMap = document.getElementById('navMap');
-    if (navMap) {
-        navMap.addEventListener('click', function() {
-            switchTab('map');
-        });
-    }
-
-    // ---- НАЗАД К КАРТЕ ----
-    var backBtn = document.getElementById('backToMapBtn');
-    if (backBtn) {
-        backBtn.addEventListener('click', function() {
-            switchTab('map');
-        });
-    }
-
-    // ---- КАМЕРА ----
-    var cameraBtn = document.getElementById('navCamera');
+    // ---- КАМЕРА (отдельно) ----
     var cameraInput = document.getElementById('cameraInput');
-    if (cameraBtn && cameraInput) {
-        cameraBtn.addEventListener('click', function() {
-            cameraInput.click();
-        });
+    if (cameraInput) {
         cameraInput.addEventListener('change', function(e) {
             if (this.files && this.files.length > 0) {
                 var file = this.files[0];
@@ -416,105 +399,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ---- ЗАЯВКИ ----
-    var requestBtn = document.getElementById('navRequests');
-    if (requestBtn) {
-        requestBtn.addEventListener('click', function() {
-            switchTab('requests');
-            populateTreeSelect();
-            loadRequests();
-        });
-    }
-
-    // ---- АНАЛИТИКА ----
-    var analyticsBtn = document.getElementById('navAnalytics');
-    if (analyticsBtn) {
-        analyticsBtn.addEventListener('click', function() {
-            switchTab('analytics');
-            updateAnalytics();
-        });
-    }
-
-    // ---- СОЗДАТЬ ЗАЯВКУ (в паспорте) ----
-    var createRequestBtn = document.getElementById('createRequestBtn');
-    if (createRequestBtn) {
-        createRequestBtn.addEventListener('click', function() {
-            switchTab('requests');
-            populateTreeSelect();
-            var select = document.getElementById('requestTreeSelect');
-            if (select && selectedTreeId) {
-                select.value = selectedTreeId;
-                var event = new Event('change');
-                select.dispatchEvent(event);
-            }
-        });
-    }
-
-    // ---- ОТПРАВКА ЗАЯВКИ ----
-    var submitBtn = document.getElementById('submitRequestBtn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', function() {
-            submitRequest();
-        });
-    }
-
-    // ---- ФОТО В ЗАЯВКЕ ----
-    var photoBtn = document.getElementById('requestPhotoBtn');
-    var photoInput = document.getElementById('requestPhotoInput');
-    if (photoBtn && photoInput) {
-        photoBtn.addEventListener('click', function() {
-            photoInput.click();
-        });
-        photoInput.addEventListener('change', function(e) {
-            if (this.files && this.files.length > 0) {
-                var reader = new FileReader();
-                reader.onload = function(ev) {
-                    requestPhotoBase64 = ev.target.result;
-                    document.getElementById('requestPhotoImg').src = requestPhotoBase64;
-                    document.getElementById('requestPhotoPreview').classList.remove('hidden');
-                    document.getElementById('requestPhotoStatus').textContent = '✅ фото добавлено';
-                    document.getElementById('requestPhotoStatus').style.color = '#34c759';
-                };
-                reader.readAsDataURL(this.files[0]);
-                this.value = '';
-            }
-        });
-    }
-
-    // ---- ВЫБОР ДЕРЕВА В ЗАЯВКЕ ----
-    var treeSelect = document.getElementById('requestTreeSelect');
-    if (treeSelect) {
-        treeSelect.addEventListener('change', function() {
-            var treeId = this.value;
-            if (!treeId) {
-                document.getElementById('selectedTreeInfo').classList.add('hidden');
-                return;
-            }
-            var tree = allTrees.find(function(t) { return t.id === treeId; });
-            if (tree) {
-                document.getElementById('selectedTreeInfo').classList.remove('hidden');
-                document.getElementById('reqCoords').textContent = tree.lat && tree.lon ?
-                    tree.lat.toFixed(6) + ', ' + tree.lon.toFixed(6) : '—';
-                document.getElementById('reqStatus').textContent = TREE_STATUSES[tree.status]?.label || tree.status || '—';
-                document.getElementById('reqLastInspection').textContent = tree.last_inspection ?
-                    new Date(tree.last_inspection).toLocaleString('ru-RU') : '—';
-            }
-        });
-    }
-
-    // ---- СИНХРОНИЗАЦИЯ ----
-    document.getElementById('syncNowBtn').addEventListener('click', function() {
+    // ---- ОСТАЛЬНЫЕ КНОПКИ ----
+    document.getElementById('syncNowBtn')?.addEventListener('click', function() {
         if (navigator.onLine) {
             syncOfflineRequests();
             loadTrees();
             alert('🔄 Синхронизация выполнена!');
         } else {
-            alert('❌ Нет интернета. Синхронизация невозможна.');
+            alert('❌ Нет интернета.');
         }
     });
 
-    // ---- ПОЛНОЭКРАН ----
-    document.getElementById('fullscreenBtn').addEventListener('click', function() {
+    document.getElementById('fullscreenBtn')?.addEventListener('click', function() {
         var el = document.documentElement;
         if (!document.fullscreenElement) {
             el.requestFullscreen?.();
@@ -523,18 +419,58 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ---- ОТЧЁТ ----
-    document.getElementById('reportBtn').addEventListener('click', function() {
+    document.getElementById('reportBtn')?.addEventListener('click', function() {
         var status = document.getElementById('reportStatusFilter').value;
         var from = document.getElementById('reportDateFrom').value;
         var to = document.getElementById('reportDateTo').value;
         alert('📄 Отчёт:\nСтатус: ' + status + '\nС: ' + (from || '—') + '\nПо: ' + (to || '—'));
     });
 
-    document.getElementById('applyReportFilterBtn').addEventListener('click', function() {
+    document.getElementById('applyReportFilterBtn')?.addEventListener('click', function() {
         var status = document.getElementById('reportStatusFilter').value;
         var filtered = status === 'all' ? allTrees : allTrees.filter(function(t) { return t.status === status; });
         alert('📊 Отфильтровано: ' + filtered.length + ' деревьев');
+    });
+
+    // ---- ЗАЯВКИ ----
+    document.getElementById('submitRequestBtn')?.addEventListener('click', function() {
+        submitRequest();
+    });
+
+    document.getElementById('requestPhotoBtn')?.addEventListener('click', function() {
+        document.getElementById('requestPhotoInput').click();
+    });
+
+    document.getElementById('requestPhotoInput')?.addEventListener('change', function(e) {
+        if (this.files && this.files.length > 0) {
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                requestPhotoBase64 = ev.target.result;
+                document.getElementById('requestPhotoImg').src = requestPhotoBase64;
+                document.getElementById('requestPhotoPreview').classList.remove('hidden');
+                document.getElementById('requestPhotoStatus').textContent = '✅ фото добавлено';
+                document.getElementById('requestPhotoStatus').style.color = '#34c759';
+            };
+            reader.readAsDataURL(this.files[0]);
+            this.value = '';
+        }
+    });
+
+    document.getElementById('requestTreeSelect')?.addEventListener('change', function() {
+        var treeId = this.value;
+        if (!treeId) {
+            document.getElementById('selectedTreeInfo').classList.add('hidden');
+            return;
+        }
+        var tree = allTrees.find(function(t) { return t.id === treeId; });
+        if (tree) {
+            document.getElementById('selectedTreeInfo').classList.remove('hidden');
+            document.getElementById('reqCoords').textContent = tree.lat && tree.lon ?
+                tree.lat.toFixed(6) + ', ' + tree.lon.toFixed(6) : '—';
+            document.getElementById('reqStatus').textContent = TREE_STATUSES[tree.status]?.label || tree.status || '—';
+            document.getElementById('reqLastInspection').textContent = tree.last_inspection ?
+                new Date(tree.last_inspection).toLocaleString('ru-RU') : '—';
+        }
     });
 
     // Загружаем данные
@@ -544,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================
-//  ЗАЯВКИ
+//  ЗАЯВКИ (все функции)
 // ============================================
 function populateTreeSelect() {
     var select = document.getElementById('requestTreeSelect');
@@ -638,26 +574,32 @@ function loadRequests() {
             })
             .then(function(data) {
                 var offline = JSON.parse(localStorage.getItem('offlineRequests') || '[]');
-                if (offline.length > 0) {
+                if (Array.isArray(offline) && offline.length > 0) {
                     syncOfflineRequests(offline);
                 }
-                renderRequests(data);
+                renderRequests(data || []);
                 updateStatusBar();
                 updateDashboard();
             })
             .catch(function(err) {
                 console.warn('Ошибка загрузки заявок:', err);
                 var offline = JSON.parse(localStorage.getItem('offlineRequests') || '[]');
-                renderRequests(offline);
+                renderRequests(Array.isArray(offline) ? offline : []);
             });
     } else {
         var offline = JSON.parse(localStorage.getItem('offlineRequests') || '[]');
-        renderRequests(offline);
+        renderRequests(Array.isArray(offline) ? offline : []);
     }
 }
 
 function syncOfflineRequests(offlineRequests) {
-    if (!navigator.onLine || offlineRequests.length === 0) return;
+    if (!offlineRequests || !Array.isArray(offlineRequests) || offlineRequests.length === 0) {
+        return;
+    }
+    
+    if (!navigator.onLine) {
+        return;
+    }
 
     var synced = 0;
     offlineRequests.forEach(function(req) {
@@ -809,7 +751,10 @@ window.addEventListener('online', function() {
     lastSyncTime = new Date().toLocaleString();
     localStorage.setItem('lastSyncTime', lastSyncTime);
     document.getElementById('lastSyncTime').textContent = lastSyncTime;
-    syncOfflineRequests(JSON.parse(localStorage.getItem('offlineRequests') || '[]'));
+    var offline = JSON.parse(localStorage.getItem('offlineRequests') || '[]');
+    if (Array.isArray(offline) && offline.length > 0) {
+        syncOfflineRequests(offline);
+    }
     loadTrees();
     loadRequests();
     updateDashboard();
@@ -819,5 +764,5 @@ window.addEventListener('offline', function() {
     updateOnlineStatus(false);
 });
 
-// ---- ЗАПУСК ПО УМОЛЧАНИЮ (DASHBOARD) ----
+// ---- ЗАПУСК ПО УМОЛЧАНИЮ ----
 switchTab('dashboard');
