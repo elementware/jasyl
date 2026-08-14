@@ -53,36 +53,36 @@ requests_db: List[Dict[str, Any]] = []
 # ============================================
 #  ТЕСТОВЫЕ ДАННЫЕ
 # ============================================
-def init_test_data():
-    if not trees_db:
-        trees_db["1"] = Tree(
-            id="1",
-            species="Quercus robur",
-            common_name="Дуб черешчатый",
-            status="healthy",
-            confidence=0.95,
-            lat=53.1706,
-            lon=63.5845,
-            photo_url="https://via.placeholder.com/400x300/4caf50/FFFFFF?text=Дуб",
-            last_inspection="2026-08-10",
-            recommendations=["Регулярный полив", "Обрезка сухих веток"],
-            history=[{"date": "2026-08-10", "status": "healthy"}]
-        )
-        trees_db["2"] = Tree(
-            id="2",
-            species="Pinus sylvestris",
-            common_name="Сосна обыкновенная",
-            status="damaged",
-            confidence=0.82,
-            lat=53.1750,
-            lon=63.5900,
-            photo_url="https://via.placeholder.com/400x300/ff9800/FFFFFF?text=Сосна",
-            last_inspection="2026-08-05",
-            recommendations=["Обработка от вредителей", "Удаление повреждённых веток"],
-            history=[{"date": "2026-08-05", "status": "damaged"}]
-        )
+#def init_test_data():
+#    if not trees_db:
+#        trees_db["1"] = Tree(
+#            id="1",
+#            species="Quercus robur",
+#            common_name="Дуб черешчатый",
+#            status="healthy",
+#            confidence=0.95,
+#            lat=53.1706,
+#            lon=63.5845,
+#            photo_url="https://via.placeholder.com/400x300/4caf50/FFFFFF?text=Дуб",
+#            last_inspection="2026-08-10",
+#            recommendations=["Регулярный полив", "Обрезка сухих веток"],
+#            history=[{"date": "2026-08-10", "status": "healthy"}]
+#        )
+#        trees_db["2"] = Tree(
+#            id="2",
+#            species="Pinus sylvestris",
+#            common_name="Сосна обыкновенная",
+#            status="damaged",
+#            confidence=0.82,
+#            lat=53.1750,
+#            lon=63.5900,
+#            photo_url="https://via.placeholder.com/400x300/ff9800/FFFFFF?text=Сосна",
+#            last_inspection="2026-08-05",
+#            recommendations=["Обработка от вредителей", "Удаление повреждённых веток"],
+#            history=[{"date": "2026-08-05", "status": "damaged"}]
+#        )
 
-init_test_data()
+#init_test_data()
 
 # ============================================
 #  ЭНДПОИНТЫ
