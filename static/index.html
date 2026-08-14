@@ -252,13 +252,13 @@
             <span>Карта</span>
         </button>
 
-        <!-- КНОПКА ЗАГРУЗКИ ФОТО (ИСПРАВЛЕННАЯ) -->
+        <!-- КНОПКА КАМЕРЫ (с id cameraBtn, без data-tab) -->
         <button class="bottom-nav-btn" id="cameraBtn">
             <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span>Загрузка фото</span>
+            <span>Камера</span>
         </button>
 
         <button class="bottom-nav-btn" data-tab="requests">
@@ -277,7 +277,8 @@
     </nav>
 
     <!-- Скрытые инпуты -->
-    <input type="file" id="cameraInput" accept="image/*" style="display:none" />
+    <!-- Основной input для загрузки фото (камера и загрузка) -->
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" />
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
