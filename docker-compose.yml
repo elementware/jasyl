@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # ========== PostgreSQL + PostGIS ==========
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: jasyl-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jasyl
+      POSTGRES_USER: jasyl_user
+      POSTGRES_PASSWORD: jasyl_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jasyl_user -d jasyl"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jasyl-network
+
+  # ========== Redis ==========
+  redis:
+    image: redis:7-alpine
+    container_name: jasyl-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jasyl-network
+
+  # ========== MinIO (S3-совместимое хранилище) ==========
+  minio:
+    image: minio/minio:latest
+    container_name: jasyl-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - jasyl-network
+
+  # ========== Backend API (FastAPI) ==========
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jasyl-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://jasyl_user:jasyl_password@postgres:5432/jasyl
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      JWT_SECRET_KEY: secret-key-change-in-production
+      DEBUG: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - jasyl-network
+
+  # ========== ML Service (заглушка / mock) ==========
+  ml-service:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    container_name: jasyl-ml
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./ml:/app
+      - /app/__pycache__
+    command: python inference/server.py
+    networks:
+      - jasyl-network
+
+  # ========== Frontend (статический Nginx) ==========
+  frontend:
+    image: nginx:alpine
+    container_name: jasyl-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - ./static:/usr/share/nginx/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - ml-service
+    networks:
+      - jasyl-network
+
+# ========== Сети ==========
+networks:
+  jasyl-network:
+    driver: bridge
+
+# ========== Тома для данных ==========
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

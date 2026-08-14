@@ -1,0 +1,435 @@
+/* ============================================
+   🌿 JASYL — Apple + Material Design Style
+   ============================================ */
+
+:root {
+    --bg-primary: #f5f5f7;
+    --bg-secondary: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #86868b;
+    --text-tertiary: #aeaeb2;
+    --border-color: #e5e5ea;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 24px;
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+    --transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- СТАТУС-БАР ---------- */
+#statusBar {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    padding: 8px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    border-bottom: 0.5px solid var(--border-color);
+    flex-shrink: 0;
+    min-height: 44px;
+    z-index: 20;
+}
+
+#statusBar .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+#statusBar .status-dot.online { background: #34c759; }
+#statusBar .status-dot.offline { background: #ff3b30; }
+
+#statusBar .sync-btn {
+    background: none;
+    border: none;
+    color: #007aff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: var(--transition);
+    font-family: var(--font);
+}
+#statusBar .sync-btn:hover { background: rgba(0, 122, 255, 0.08); }
+
+/* ---------- НАВИГАЦИЯ ---------- */
+#bottomNav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-top: 0.5px solid var(--border-color);
+    padding: 6px 8px 8px;
+    flex-shrink: 0;
+    z-index: 30;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 500;
+    min-width: 52px;
+    position: relative;
+}
+
+.nav-btn.active { color: #007aff; }
+
+.nav-btn svg {
+    width: 28px;
+    height: 28px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: var(--transition);
+}
+.nav-btn:active { transform: scale(0.92); }
+
+.nav-btn .badge {
+    position: absolute;
+    top: 0px;
+    right: 4px;
+    background: #ff3b30;
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* ---------- ВКЛАДКИ ---------- */
+.tab-content { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- КАРТА ---------- */
+.leaflet-container {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+    background: var(--bg-primary) !important;
+}
+
+.leaflet-control-zoom {
+    border: none !important;
+    box-shadow: var(--shadow-md) !important;
+    border-radius: var(--radius-md) !important;
+    overflow: hidden;
+}
+.leaflet-control-zoom a {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+    transition: var(--transition) !important;
+    font-size: 18px !important;
+    font-weight: 300 !important;
+}
+.leaflet-control-zoom a:hover { background: var(--bg-primary) !important; }
+
+.leaflet-popup-content-wrapper {
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-lg) !important;
+    background: var(--bg-secondary) !important;
+}
+.leaflet-popup-content {
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+    padding: 6px 0 !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font) !important;
+}
+.leaflet-popup-tip { background: var(--bg-secondary) !important; }
+
+/* ---------- ЛЕГЕНДА (крупная, сверху) ---------- */
+#legendContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 0.5px solid rgba(255, 255, 255, 0.3);
+    margin: 0 12px;
+    z-index: 10;
+}
+
+.legend-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    background: transparent;
+    color: var(--text-secondary);
+    user-select: none;
+    white-space: nowrap;
+}
+
+.legend-btn .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.legend-btn .count-badge {
+    display: inline-block;
+    background: rgba(0, 0, 0, 0.06);
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    line-height: 16px;
+}
+
+.legend-btn:hover { background: rgba(0, 0, 0, 0.04); }
+.legend-btn.active { background: rgba(0, 0, 0, 0.06); box-shadow: 0 0 0 1px var(--text-tertiary); }
+.legend-btn:active { transform: scale(0.94); }
+
+/* ---------- МАРКЕР ---------- */
+.material-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: white;
+    font-weight: 600;
+    font-size: 11px;
+    font-family: var(--font);
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: var(--transition);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+.material-marker:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- КАРТОЧКИ ---------- */
+#card .photo-container {
+    position: relative;
+    background: var(--bg-primary);
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+}
+#card .photo-container img { width: 100%; height: 100%; object-fit: cover; }
+
+#card .status-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 6px 18px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(4px);
+    letter-spacing: 0.3px;
+}
+
+/* ---------- APPLE КАРТОЧКИ ---------- */
+.apple-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 0.5px solid var(--border-color);
+    transition: var(--transition);
+}
+.apple-card:hover { box-shadow: var(--shadow-lg); }
+
+/* ---------- КНОПКИ ---------- */
+.apple-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    background: #007aff;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+}
+.apple-btn:hover {
+    background: #0066d9;
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    transform: translateY(-1px);
+}
+.apple-btn:active { transform: scale(0.96); }
+
+/* ---------- ФОРМЫ ---------- */
+input, select, textarea {
+    font-family: var(--font);
+    font-size: 15px;
+    padding: 10px 14px;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: var(--transition);
+    width: 100%;
+    outline: none;
+    appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: #007aff;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    background: var(--bg-secondary);
+}
+
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%2386868b'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+}
+
+label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* ---------- СКРОЛЛ ---------- */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ---------- ЗАЯВКИ ---------- */
+.request-item {
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    border-left: 4px solid var(--border-color);
+    transition: var(--transition);
+}
+.request-item:hover {
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
+}
+.request-item.priority-emergency { border-left-color: #ff3b30; }
+.request-item.priority-high { border-left-color: #ff9500; }
+.request-item.priority-medium { border-left-color: #ffcc00; }
+.request-item.priority-low { border-left-color: #34c759; }
+
+/* ---------- СТАТИСТИКА ---------- */
+.stat-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    border: 0.5px solid var(--border-color);
+}
+.stat-card .stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+.stat-card .stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* ---------- АДАПТИВ ---------- */
+@media (max-width: 640px) {
+    #statusBar {
+        font-size: 12px;
+        padding: 6px 12px;
+        min-height: 38px;
+    }
+    #statusBar .status-dot { width: 8px; height: 8px; }
+
+    .nav-btn { min-width: 40px; padding: 2px 4px; font-size: 9px; }
+    .nav-btn svg { width: 22px; height: 22px; }
+
+    #legendContainer { gap: 4px; padding: 6px 10px; border-radius: var(--radius-md); margin: 0 6px; }
+    .legend-btn { font-size: 10px; padding: 4px 10px; gap: 4px; }
+    .legend-btn .dot { width: 8px; height: 8px; }
+    .legend-btn .count-badge { font-size: 9px; line-height: 14px; padding: 0 6px; }
+
+    .stat-card .stat-number { font-size: 22px; }
+    .stat-card .stat-label { font-size: 10px; }
+
+    input, select, textarea { font-size: 14px; padding: 8px 12px; }
+}
+
+@media (max-width: 380px) {
+    .legend-btn { font-size: 8px; padding: 3px 6px; }
+    .legend-btn .dot { width: 6px; height: 6px; }
+}
+
+/* ---------- FULLSCREEN ---------- */
+:-webkit-full-screen #map { height: 100vh; }
+:-moz-full-screen #map { height: 100vh; }
+:fullscreen #map { height: 100vh; }

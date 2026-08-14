@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>🌳 JASYL – Зелёный Костанай</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Кастомные стили -->
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="bg-gray-100 h-screen overflow-hidden flex flex-col">
+
+    <!-- ===== СТАТУС-БАР (крупный) ===== -->
+    <div id="statusBar" class="bg-white border-b border-gray-200 px-4 py-2 flex flex-wrap items-center justify-between text-sm text-gray-600 shrink-0">
+        <div class="flex items-center gap-4">
+            <span id="statusDot" class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+            <span id="statusText" class="font-medium">Онлайн</span>
+            <span class="text-gray-300">|</span>
+            <span>🔄 <span id="lastSyncTime" class="font-medium">—</span></span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span>🌳 <span id="totalTreesCount" class="font-bold text-blue-600">0</span></span>
+            <span class="text-gray-300">|</span>
+            <span>📋 <span id="totalRequestsCount" class="font-bold text-blue-600">0</span></span>
+            <button id="syncNowBtn" class="text-blue-500 hover:underline text-sm font-medium">Синхронизировать</button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- ОСНОВНОЙ КОНТЕНТ                           -->
+    <!-- ========================================== -->
+    <div id="mainContent" class="flex-1 overflow-hidden relative">
+
+        <!-- ===== ВКЛАДКА: ГЛАВНОЕ ОКНО (DASHBOARD) ===== -->
+        <div id="tab-dashboard" class="tab-content w-full h-full absolute inset-0 bg-white overflow-y-auto">
+            <div class="p-6 max-w-2xl mx-auto">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">🌿 JASYL</h1>
+                <p class="text-gray-500 text-sm mb-6">Зелёный Костанай — мониторинг и управление</p>
+
+                <!-- Статистика -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100">
+                        <div class="text-3xl font-bold text-blue-600" id="dashTotal">0</div>
+                        <div class="text-sm text-gray-500">Всего деревьев</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100">
+                        <div class="text-3xl font-bold text-green-600" id="dashHealthy">0</div>
+                        <div class="text-sm text-gray-500">Здоровые</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100">
+                        <div class="text-3xl font-bold text-orange-500" id="dashDamaged">0</div>
+                        <div class="text-sm text-gray-500">Повреждённые</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100">
+                        <div class="text-3xl font-bold text-red-500" id="dashDead">0</div>
+                        <div class="text-sm text-gray-500">Сухие</div>
+                    </div>
+                </div>
+
+                <!-- Статус и заявки -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                        <div class="text-sm text-gray-500">📶 Статус</div>
+                        <div class="text-lg font-semibold" id="dashStatus">Онлайн</div>
+                        <div class="text-xs text-gray-400 mt-1">Последняя синхронизация: <span id="dashSyncTime">—</span></div>
+                    </div>
+                    <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                        <div class="text-sm text-gray-500">📋 Заявки</div>
+                        <div class="text-lg font-semibold" id="dashRequests">0</div>
+                        <div class="text-xs text-gray-400 mt-1">ожидают выполнения</div>
+                    </div>
+                </div>
+
+                <!-- Быстрые действия -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="switchTab('map')" class="bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition shadow-md">
+                        🗺️ Открыть карту
+                    </button>
+                    <button onclick="switchTab('requests')" class="bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-indigo-600 transition shadow-md">
+                        📋 Перейти к заявкам
+                    </button>
+                    <button onclick="document.getElementById('cameraInput').click()" class="bg-green-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-600 transition shadow-md col-span-2">
+                        📸 Сделать фото дерева
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ВКЛАДКА: КАРТА ===== -->
+        <div id="tab-map" class="tab-content w-full h-full absolute inset-0 hidden">
+            <div id="map" class="w-full h-full"></div>
+
+            <!-- ЛЕГЕНДА ВВЕРХУ (крупная) -->
+            <div id="legendContainer" class="absolute top-3 left-3 right-3 z-10 flex flex-wrap gap-2 justify-center"></div>
+
+            <!-- Полноэкран -->
+            <button id="fullscreenBtn" class="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur-sm p-2.5 rounded-xl shadow-lg">
+                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- ===== ВКЛАДКА: ПАСПОРТ ===== -->
+        <div id="tab-passport" class="tab-content w-full h-full absolute inset-0 hidden bg-white overflow-y-auto">
+            <div class="p-4 max-w-2xl mx-auto h-full flex flex-col">
+                <button id="backToMapBtn" class="flex items-center gap-2 text-blue-500 mb-3 text-base font-medium">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Назад к карте
+                </button>
+                <div id="card" class="flex-1 hidden overflow-y-auto">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="relative bg-gray-100 aspect-video">
+                            <img id="photoPreview" src="" alt="Фото" class="w-full h-full object-cover" />
+                            <span id="statusBadge" class="absolute top-4 right-4 px-4 py-1.5 rounded-full text-white text-sm font-bold shadow-lg"></span>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <h2 id="speciesTitle" class="text-2xl font-extrabold text-gray-800">—</h2>
+                            <div class="grid grid-cols-2 gap-3 text-base">
+                                <div><span class="text-gray-500 text-sm">Вид</span><p id="species" class="font-bold text-gray-800 text-lg">—</p></div>
+                                <div><span class="text-gray-500 text-sm">Состояние</span><p id="condition" class="font-bold text-gray-800 text-lg">—</p></div>
+                                <div><span class="text-gray-500 text-sm">Уверенность</span><p id="confidence" class="font-bold text-gray-800 text-lg">—</p></div>
+                                <div><span class="text-gray-500 text-sm">Обновлено</span><p id="lastUpdate" class="font-bold text-gray-800 text-lg">—</p></div>
+                                <div class="col-span-2"><span class="text-gray-500 text-sm">Координаты</span><p id="coordsDisplay" class="font-bold text-gray-800 text-base">—</p></div>
+                            </div>
+                            <div><h4 class="text-sm font-semibold text-gray-700">📌 Рекомендации</h4><ul id="recommendations" class="text-base list-disc pl-5 text-gray-700"></ul></div>
+                            <div><h4 class="text-sm font-semibold text-gray-700">📋 История</h4><ul id="historyList" class="text-base list-disc pl-5 text-gray-700 max-h-28 overflow-y-auto"></ul></div>
+                            <button id="createRequestBtn" class="w-full bg-blue-500 text-white py-3.5 rounded-xl font-bold text-base hover:bg-blue-600 transition shadow-md">📩 Сформировать заявку</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="noTreeSelected" class="flex items-center justify-center h-full text-gray-400 text-lg font-medium">🌳 Выберите дерево на карте</div>
+            </div>
+        </div>
+
+        <!-- ===== ВКЛАДКА: ЗАЯВКИ ===== -->
+        <div id="tab-requests" class="tab-content w-full h-full absolute inset-0 hidden bg-white overflow-y-auto">
+            <div class="p-4 max-w-2xl mx-auto h-full flex flex-col">
+                <h2 class="text-2xl font-extrabold text-gray-800 mb-3">📋 Заявки</h2>
+
+                <!-- Форма -->
+                <div class="bg-gray-50 p-4 rounded-xl mb-3 shrink-0">
+                    <div class="grid grid-cols-1 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">🌳 Дерево</label>
+                            <select id="requestTreeSelect" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base bg-white"></select>
+                        </div>
+                        <div id="selectedTreeInfo" class="hidden text-sm text-gray-500 bg-white/60 rounded-lg p-2.5 space-y-1 border border-gray-100">
+                            <div><span class="font-medium">📍 Координаты:</span> <span id="reqCoords">—</span></div>
+                            <div><span class="font-medium">🌿 Состояние:</span> <span id="reqStatus">—</span></div>
+                            <div><span class="font-medium">📅 Последний осмотр:</span> <span id="reqLastInspection">—</span></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Тип работ</label>
+                                <select id="requestType" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base bg-white">
+                                    <option value="pruning">🌿 Обрезка</option>
+                                    <option value="removal">🪓 Удаление</option>
+                                    <option value="watering">💧 Полив</option>
+                                    <option value="treatment">💊 Лечение</option>
+                                    <option value="inspection">🔍 Осмотр</option>
+                                    <option value="emergency">🚨 Аварийное</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Приоритет</label>
+                                <select id="requestPriority" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base bg-white">
+                                    <option value="emergency">🔴 Аварийный</option>
+                                    <option value="high">🟠 Высокий</option>
+                                    <option value="medium" selected>🟡 Средний</option>
+                                    <option value="low">🟢 Низкий</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">📅 Срок</label>
+                                <input type="date" id="requestDueDate" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base bg-white" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">📋 Статус</label>
+                                <select id="requestStatusSelect" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base bg-white">
+                                    <option value="pending">⏳ Ожидает</option>
+                                    <option value="in_progress">🔄 В работе</option>
+                                    <option value="done">✅ Выполнено</option>
+                                    <option value="rejected">❌ Отклонено</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">📝 Описание</label>
+                            <textarea id="requestComment" rows="2" placeholder="Что нужно сделать?" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base bg-white resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">📸 Фото</label>
+                            <div class="flex items-center gap-3">
+                                <button id="requestPhotoBtn" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition border border-blue-200">
+                                    📷 Сделать фото
+                                </button>
+                                <span id="requestPhotoStatus" class="text-sm text-gray-400">нет фото</span>
+                                <input type="file" id="requestPhotoInput" accept="image/*" capture="environment" class="hidden" />
+                            </div>
+                            <div id="requestPhotoPreview" class="hidden mt-2">
+                                <img id="requestPhotoImg" src="" alt="Фото" class="h-16 w-16 object-cover rounded-lg border border-gray-200" />
+                            </div>
+                        </div>
+                        <button id="submitRequestBtn" class="w-full bg-blue-500 text-white py-3.5 rounded-xl font-bold text-base hover:bg-blue-600 transition shadow-md">
+                            ➕ Создать заявку
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Журнал -->
+                <div class="flex-1 overflow-y-auto">
+                    <h3 class="text-base font-semibold text-gray-600 mb-2">📋 Журнал заявок</h3>
+                    <div id="requestsList" class="space-y-2 pb-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ВКЛАДКА: АНАЛИТИКА ===== -->
+        <div id="tab-analytics" class="tab-content w-full h-full absolute inset-0 hidden bg-white overflow-y-auto">
+            <div class="p-4 max-w-2xl mx-auto h-full flex flex-col">
+                <h2 class="text-2xl font-extrabold text-gray-800 mb-3">📊 Аналитика</h2>
+                <div id="analyticsContainer" class="grid grid-cols-2 gap-3 mb-3"></div>
+                <div class="bg-gray-50 p-4 rounded-xl mb-3">
+                    <h3 class="font-bold text-base text-gray-700 mb-2">🔮 Прогноз</h3>
+                    <div id="forecast" class="text-base space-y-1"></div>
+                </div>
+                <button id="reportBtn" class="w-full bg-indigo-500 text-white py-3 rounded-xl font-bold text-base hover:bg-indigo-600 transition shadow-md mb-3">📄 Сформировать отчёт</button>
+                <div class="bg-gray-50 p-3 rounded-xl mb-3 flex flex-wrap gap-2">
+                    <select id="reportStatusFilter" class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-0 bg-white">
+                        <option value="all">Все статусы</option>
+                        <option value="healthy">Здоровые</option>
+                        <option value="dead">Сухие</option>
+                        <option value="trunk_damaged">Повр. ствол</option>
+                        <option value="branch_damaged">Опасные ветви</option>
+                        <option value="leaning">Наклонённые</option>
+                        <option value="diseased">Болезнь</option>
+                        <option value="needs_check">Требуют проверки</option>
+                    </select>
+                    <input type="date" id="reportDateFrom" class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-0 bg-white" />
+                    <input type="date" id="reportDateTo" class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-0 bg-white" />
+                    <button id="applyReportFilterBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600">Применить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- НИЖНЯЯ НАВИГАЦИЯ (ЧЁРНЫЕ ИКОНКИ, КРУПНЫЙ ШРИФТ) -->
+    <!-- ========================================== -->
+    <nav id="bottomNav" class="bg-white border-t border-gray-200 flex justify-around items-center py-2 px-2 safe-area-bottom shrink-0">
+        <button id="navDashboard" class="nav-btn flex flex-col items-center gap-0.5 text-gray-700">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+            </svg>
+            <span class="text-xs font-medium">Главная</span>
+        </button>
+
+        <button id="navMap" class="nav-btn flex flex-col items-center gap-0.5 text-gray-700">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            <span class="text-xs font-medium">Карта</span>
+        </button>
+
+        <button id="navCamera" class="nav-btn flex flex-col items-center gap-0.5 text-gray-700">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="text-xs font-medium">Камера</span>
+        </button>
+
+        <button id="navRequests" class="nav-btn flex flex-col items-center gap-0.5 text-gray-700">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span class="text-xs font-medium">Заявки</span>
+        </button>
+
+        <button id="navAnalytics" class="nav-btn flex flex-col items-center gap-0.5 text-gray-700">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+            <span class="text-xs font-medium">Аналитика</span>
+        </button>
+    </nav>
+
+    <!-- Скрытые инпуты -->
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
+
+    <!-- Скрипты -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
