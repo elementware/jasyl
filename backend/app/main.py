@@ -132,7 +132,8 @@ async def upload_file(file: UploadFile = File(...)):
         "condition": "healthy",
         "confidence": 0.88,
         "lat": new_tree.lat,
-        "lon": new_tree.lon
+        "lon": new_tree.lon,
+        "photo_url": f"/uploads/{filename}"
     }
 
 @app.post("/update-coords/{tree_id}")
