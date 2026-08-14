@@ -34,6 +34,7 @@ var selectedTreeId = null;
 var currentFilter = null;
 var requestPhotoBase64 = null;
 var lastSyncTime = localStorage.getItem('lastSyncTime') || '—';
+var isUploading = false; // Флаг для предотвращения повторного открытия диалога
 
 // ============================================
 //  LIGHTBOX (полноэкранный режим для фото)
@@ -500,9 +501,12 @@ function selectTree(id) {
 }
 
 // ============================================
-//  ЗАГРУЗКА ФОТО
+//  ЗАГРУЗКА ФОТО (с защитой от повторных кликов)
 // ============================================
 async function handleFile(file) {
+    // Устанавливаем флаг, чтобы блокировать повторное открытие диалога
+    window.isUploading = true;
+
     var formData = new FormData();
     formData.append('file', file);
 
@@ -559,6 +563,9 @@ async function handleFile(file) {
     } catch (err) {
         alert('❌ Ошибка: ' + err.message);
     } finally {
+        // Снимаем флаг после завершения
+        window.isUploading = false;
+
         if (statusBadge) {
             statusBadge.textContent = originalText;
             var tree = allTrees.find(function(t) { return t.id === selectedTreeId; });
@@ -575,7 +582,9 @@ var cameraInput = document.getElementById('cameraInput');
 
 if (navCamera) {
     navCamera.addEventListener('click', function() {
-        if (cameraInput) cameraInput.click();
+        if (cameraInput && !window.isUploading) {
+            cameraInput.click();
+        }
     });
 }
 
@@ -621,8 +630,10 @@ document.addEventListener('DOMContentLoaded', function() {
             switchTab(tab);
 
             if (tab === 'camera') {
-                var cameraInput = document.getElementById('cameraInput');
-                if (cameraInput) cameraInput.click();
+                var camInput = document.getElementById('cameraInput');
+                if (camInput && !window.isUploading) {
+                    camInput.click();
+                }
             }
         });
     });
@@ -641,8 +652,10 @@ document.addEventListener('DOMContentLoaded', function() {
             switchTab(tab);
 
             if (tab === 'camera') {
-                var cameraInput = document.getElementById('cameraInput');
-                if (cameraInput) cameraInput.click();
+                var camInput = document.getElementById('cameraInput');
+                if (camInput && !window.isUploading) {
+                    camInput.click();
+                }
             }
         });
     });
